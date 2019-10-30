@@ -1,0 +1,31 @@
+
+* {
+    box-sizing: border-box;
+  }
+
+:root {
+    --element-border-color: white;
+    --square-size: 70x;
+    --grid-size: repeat(10, 70px);
+}
+
+
+#flex-grid-game-container {
+    display: flex;
+    justify-content: space-around;
+
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: var(--grid-size);
+    grid-template-rows: var(--grid-size);
+
+}
+
+.grid-container > div {
+    background-color: grey;
+    grid-column: 1 span;
+    border: 1px solid black;
+    margin: 5px;
+}
