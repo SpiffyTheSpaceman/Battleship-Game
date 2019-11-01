@@ -5,8 +5,8 @@
 
 :root {
     --element-border-color: white;
-    --square-size: 70x;
-    --grid-size: repeat(10, 70px);
+    --square-size: 8vh;
+    --grid-size: repeat(10, 8vh);
 }
 
 
