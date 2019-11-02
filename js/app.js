@@ -93,6 +93,7 @@ const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 const state = {
     turnPhase: 'setup',
     shipPrimed: null,
+    shipOrientation: 'horizontal',
 }
 /*----- cached element references -----*/ 
 const playerBoardEl = document.getElementById('player-grid-container');
@@ -103,7 +104,7 @@ const bodyEl = document.querySelector('body');
 /*----- event listeners -----*/ 
 playerBoardEl.addEventListener('click', handleSetupBoardClick);
 // opponentBoardEl.addEventListener('click', handleAttackBoardClick);
-// bodyEl.addEventListener('contextmenu', handleRightClick);
+// playerBoardEl.addEventListener('contextmenu', handleRightClick);
 
 /*----- functions -----*/
 //Create GameBoard Pieces
@@ -116,9 +117,22 @@ function handleSetupBoardClick(event) {
     if (state.turnPhase !== 'setup' || event.target.tagName !== 'DIV') {
         break;
     }
-    if (state.shipPrimed !== null && !event.target.classList.includes('boat')) {
-        
+    let index = [parseInt(evt.target.id[1]) + parseInt(evt.target.id[3])];
+    let neighborIndexes = getNeighborIndexes(index[0], index[1]);
+    let shipExists = checkNeighbors(neighborIndexes[0], neighbordIndexes[1]);
+
+    if (!state.shipPrimed) {
+        if (shipExists) {
+            // removeShip(event.target);
+        }
+        else {
+            return;
+        }
     }
+
+    if (state.shipOrientation === 'horizontal' && (index[0] + state.shipPrimed - 1) > 9) {
+        return;
+    } else if (state.shipOrientation === 'vertical' && (index[0] + state.shipPrimed - 1)
 
 
 }
