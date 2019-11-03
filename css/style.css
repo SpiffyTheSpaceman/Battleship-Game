@@ -5,9 +5,17 @@
 
 :root {
     --element-border-color: white;
-    --square-size: 8vh;
-    --grid-size: repeat(10, 8vh);
+    --square-size: 4vw;
+    --grid-size: repeat(10, 4vw);
+    --axis-grid-size: repeat(11, 4vw);
+    --ship-image: none;
+    --ship-length: 0;
 }
+
+
+
+
+
 
 
 #flex-grid-game-container {
@@ -16,7 +24,44 @@
 
 }
 
+#flex-grid-game-container > div {
+    display: grid;
+    grid-template-columns: var(--axis-grid-size);
+    grid-template-rows: var(--axis-grid-size);
+}
+
+.x-axis {
+    grid-column: 2 / span 10;
+    grid-row: 1 / span 1; 
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+}
+
+.x-axis > p {
+    margin: 0;
+    padding: 0;
+    padding-bottom: 0.8vw;
+}
+
+
+.y-axis {
+    grid-row: 2 / span 10;
+    grid-column: 1 / span 1;
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: space-around;
+    align-items: flex-end;
+}
+.y-axis > p {
+    margin: 0;
+    padding: 0;
+    padding-right: 20%;
+}
+
 .grid-container {
+    grid-row: 2 / span 10;
+    grid-column: 2 / span 10;
     display: grid;
     grid-template-columns: var(--grid-size);
     grid-template-rows: var(--grid-size);
@@ -27,5 +72,17 @@
     background-color: grey;
     grid-column: 1 span;
     border: 1px solid black;
-    margin: 5px;
+    margin: 5%;
+}
+
+.grid-container > div:after:hover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-image: var(--ship-image);
+
+}
+
+.active {
+    background-color: red;
 }

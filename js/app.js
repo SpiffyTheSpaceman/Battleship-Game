@@ -1,3 +1,10 @@
+let carrierShip = [0,0,0,0,0];
+let battleShip = [0,0,0,0];
+let cruiserShip = [0,0,0];
+let subMShip = [0,0,0];
+let destroyerShip = [0,0];
+
+
 /* Pseudo Code
 let state.stage = to either Set Up, Playing, Winner, or Loser since there are two main parts to the game: the player's set up stage and the playing stage.
 let state.shipPrimed = false. This will be the state for whether or not a player clicked on a ship during the set up stage. This will let me know that they have selected a ship and the next click on the playerBoard should be to place the ship there.
@@ -50,6 +57,9 @@ in playerBoardHandleClick {
 
     checkAllShipsPlayed()
     function that will check if all the ships were placed, if yes, set state ship to true.
+    */
+
+    /*
 }
 
 in playerHandleRightClick {
@@ -87,6 +97,12 @@ runEnemyAi();
 stuff I will figure out.
 
 */
+// remainingShips = 
+// if(turn === AI && remainingShip > 0) {
+//     placeShip()
+// } 
+
+
 /*----- constants -----*/
 const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 /*----- app's state (variables) -----*/ 
@@ -95,47 +111,149 @@ const state = {
     shipPrimed: null,
     shipOrientation: 'horizontal',
 }
+//the ship coordinate represents the coordinate the front of the ship is at on the game board.
+class Ship {
+    constructor(health) {
+        this.health = health;
+        this.orientation = 'horizontal';
+        this.coordinate = [];
+        this.counter = 1;
+    }
+}
+
+const shipState = {
+    typeCarrier: new Ship ([0, 0, 0, 0, 0]),
+    typeBattleship: new Ship ([0, 0, 0, 0]),
+    typeCruiser: new Ship ([0, 0, 0]),
+    typeSubmarine: new Ship ([0, 0, 0]),
+    typeDestroyer: new Ship ([0, 0])
+}
+
+
 /*----- cached element references -----*/ 
 const playerBoardEl = document.getElementById('player-grid-container');
 const opponentBoardEl = document.getElementById('opponent-grid-container');
 const playerCoordinateEl = [], opponentCoordinateEl = [];
-const bodyEl = document.querySelector('body');
+const portEl = document.getElementById('battleships-container');
+const root = document.documentElement;
 
 /*----- event listeners -----*/ 
 playerBoardEl.addEventListener('click', handleSetupBoardClick);
 // opponentBoardEl.addEventListener('click', handleAttackBoardClick);
-// playerBoardEl.addEventListener('contextmenu', handleRightClick);
+playerBoardEl.addEventListener('contextmenu', handleRightClick);
+portEl.addEventListener('click', handleShipSelect);
 
 /*----- functions -----*/
 //Create GameBoard Pieces
-//1 x 4, 2 x 3, 3 x 2, 1 x 4
+//5, 4, 3, 3, 2 : carrier, battleship, cruiser, submarine, destroyer
+//Step 1: I get click on a ship and which should have a classname. It will store the classname to shipPrimed which will adjust the counter of the ship objects. 
+//Step 2: I will click on a square which will change the element and neighboring elements to have a class of active, orientation, ship type, 
+
+
 
 
 //Create GameBoard Function
+
+function handleShipSelect(event) {
+    // If the thing clicked on wasn't a ship or if it the stage isn't in setUp, do nothing.
+    if(state.turnPhase !== 'setup' || event.target.tagName !== 'IMG') {
+        return;
+    }
+    //Get the type of ship that was clicked on.
+    let shipType = findShipType(event.target);
+
+    //If there is no more of the selected type's ship, do nothing.
+    if(shipState[shipType].counter === 0) {
+        return;
+    }
+     
+    //Assuming the ship type does exist, If there is already a ship primed, replace the currently primed ship with the ship just clicked on
+    if(state.shipPrimed) {
+        state.shipPrimed = shipType;
+        // root.style.setProperty('--ship-image', );
+    }
+
+}
+
 function handleSetupBoardClick(event) {
     //The only purpose of this event handler is to handle the setUp stage on the player's side of the board, so do nothing if it's not even in the set up stage.
     if (state.turnPhase !== 'setup' || event.target.tagName !== 'DIV') {
-        break;
+        return;
     }
-    let index = [parseInt(evt.target.id[1]) + parseInt(evt.target.id[3])];
-    let neighborIndexes = getNeighborIndexes(index[0], index[1]);
-    let shipExists = checkNeighbors(neighborIndexes[0], neighbordIndexes[1]);
+    let index = [parseInt(evt.target.id[3]) + parseInt(evt.target.id[5])];
 
+    //If there is no ship selected, and we click on a ship on the board that has already been placed, remove it and set it as shipPrimed.
     if (!state.shipPrimed) {
-        if (shipExists) {
-            // removeShip(event.target);
+        if (event.target.classList.contains('active')) {
+            removeShip(event.target);
+            return;
         }
         else {
             return;
         }
-    }
+    } 
 
-    if (state.shipOrientation === 'horizontal' && (index[0] + state.shipPrimed - 1) > 9) {
+    //Assuming the ship is primed, if the player clicks on a square in which the ship would overlap the edges of the game board, return and end function.
+    //NOTE: I don't replace any ships that are already on the coordinate here, because if it does replace, it would be placed on a square that overlap the edges of the gameboard.  I am making it so that the currently primed ship overlapping the edges has a higher priority than if there is already a ship there that needs to be replaced to make room for the primed ship.
+    if (state.shipOrientation === 'horizontal' && (index[0] + state.shipPrimed - 1) > 9 ||
+        (state.shipOrientation === 'vertical' && (index[1] + state.shipPrimed - 1) > 9)) {
         return;
-    } else if (state.shipOrientation === 'vertical' && (index[0] + state.shipPrimed - 1)
-
-
+    }
+    
+    //Assuming the ship is Primed and doesn't overlap, If the elements that the ship would have taken up are already taken by another ship, then replace that ship with the currently primed ship and set the ship that was already active to shipPrimed. 
+    let neighborIndexes = getNeighborIndexes(index[0], index[1]);
+    let shipExists = checkNeighbors(neighborIndexes[0], neighbordIndexes[1]);
+     if (shipExists);
 }
+
+
+
+
+function removeShip(squareEl) {
+    let shipType = findShipType(squareEl);
+    loopEachShipSquare(shipType, function(squareEl) {
+        squareEl.classList.remove(shipType);
+    })
+    shipState[shipType].counter = 1;
+    state.shipPrimed = shipType;
+    state.shipOrientation = shipState[shipType].orientation;
+    // root.style.setProperty('--ship-image', );
+}
+
+//This will be a function that will go through the classNames of a DOM Element and see if there is a class of ship type. If so, it will return the name of that ship type, otherwise it will return an empty string.
+function findShipType(element) {
+    let shipType = '';
+    element.classList.forEach( classItem => {
+        if (classItem.includes('type')) {
+            shipType = classItem;
+        } else {
+            return;
+        };
+    })
+    return shipType;
+}
+
+
+function primeShip(newShipType, oldShipType) {
+    
+}
+
+//This will be a function that will be like the forEach method except it will loop through every element that a ship that has already been placed occupies and runs a given callback function. It accepts the shiptype name as a parameter and a callback function.
+function loopEachShipSquare(shipType, callback) {
+    let row = shipState[shipType].coordinate[0];
+    let col = shipState[shipType].coordinate[1];
+    let shipLength = shipState[shipType].health.length;
+    if (shipState[shipType].orientation === 'horizontal') {
+        for (i = 0; i < shipLength; i++) {
+            callback(playerCoordinateEl[row + i][col]);
+        }
+    } else {
+        for (i = 0; i < shipLength; i++) {
+            callback(playerCoordinateEl[row][col + i]);
+        }
+    }
+}
+
 
 function createGameBoards() {
     for(i=0; i < 10; i++) {
@@ -144,8 +262,8 @@ function createGameBoards() {
         for(j=0; j < 10; j++) {
             playerCoordinateEl[i][j] = document.createElement('div');
             opponentCoordinateEl[i][j] = document.createElement('div');
-            playerCoordinateEl[i][j].id = `player-r${i}c${j}`;
-            opponentCoordinateEl[i][j].id = `opponent-r${i}c${j}`;
+            playerCoordinateEl[i][j].id = `p-r${i}c${j}`;
+            opponentCoordinateEl[i][j].id = `o-r${i}c${j}`;
             playerBoardEl.appendChild(playerCoordinateEl[i][j]);
             opponentBoardEl.appendChild(opponentCoordinateEl[i][j]);
         }
