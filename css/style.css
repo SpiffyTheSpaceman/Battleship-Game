@@ -82,3 +82,7 @@
     background-image: var(--ship-image);
 
 }
+
+.active {
+    background-color: red;
+}

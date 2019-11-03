@@ -111,7 +111,7 @@ const state = {
     shipPrimed: null,
     shipOrientation: 'horizontal',
 }
-
+//the ship coordinate represents the coordinate the front of the ship is at on the game board.
 class Ship {
     constructor(health) {
         this.health = health;
@@ -134,13 +134,14 @@ const shipState = {
 const playerBoardEl = document.getElementById('player-grid-container');
 const opponentBoardEl = document.getElementById('opponent-grid-container');
 const playerCoordinateEl = [], opponentCoordinateEl = [];
-const bodyEl = document.querySelector('body');
+const portEl = document.getElementById('battleships-container');
 const root = document.documentElement;
 
 /*----- event listeners -----*/ 
 playerBoardEl.addEventListener('click', handleSetupBoardClick);
 // opponentBoardEl.addEventListener('click', handleAttackBoardClick);
-// playerBoardEl.addEventListener('contextmenu', handleRightClick);
+playerBoardEl.addEventListener('contextmenu', handleRightClick);
+portEl.addEventListener('click', handleShipSelect);
 
 /*----- functions -----*/
 //Create GameBoard Pieces
@@ -152,6 +153,28 @@ playerBoardEl.addEventListener('click', handleSetupBoardClick);
 
 
 //Create GameBoard Function
+
+function handleShipSelect(event) {
+    // If the thing clicked on wasn't a ship or if it the stage isn't in setUp, do nothing.
+    if(state.turnPhase !== 'setup' || event.target.tagName !== 'IMG') {
+        return;
+    }
+    //Get the type of ship that was clicked on.
+    let shipType = findShipType(event.target);
+
+    //If there is no more of the selected type's ship, do nothing.
+    if(shipState[shipType].counter === 0) {
+        return;
+    }
+     
+    //Assuming the ship type does exist, If there is already a ship primed, replace the currently primed ship with the ship just clicked on
+    if(state.shipPrimed) {
+        state.shipPrimed = shipType;
+        // root.style.setProperty('--ship-image', );
+    }
+
+}
+
 function handleSetupBoardClick(event) {
     //The only purpose of this event handler is to handle the setUp stage on the player's side of the board, so do nothing if it's not even in the set up stage.
     if (state.turnPhase !== 'setup' || event.target.tagName !== 'DIV') {
@@ -162,8 +185,8 @@ function handleSetupBoardClick(event) {
     //If there is no ship selected, and we click on a ship on the board that has already been placed, remove it and set it as shipPrimed.
     if (!state.shipPrimed) {
         if (event.target.classList.contains('active')) {
-            // removeShip(event.target);
-            // return;
+            removeShip(event.target);
+            return;
         }
         else {
             return;
@@ -187,26 +210,35 @@ function handleSetupBoardClick(event) {
 
 
 function removeShip(squareEl) {
-    let type = '';
-    squareEl.classList.forEach( classItem => {
+    let shipType = findShipType(squareEl);
+    loopEachShipSquare(shipType, function(squareEl) {
+        squareEl.classList.remove(shipType);
+    })
+    shipState[shipType].counter = 1;
+    state.shipPrimed = shipType;
+    state.shipOrientation = shipState[shipType].orientation;
+    // root.style.setProperty('--ship-image', );
+}
+
+//This will be a function that will go through the classNames of a DOM Element and see if there is a class of ship type. If so, it will return the name of that ship type, otherwise it will return an empty string.
+function findShipType(element) {
+    let shipType = '';
+    element.classList.forEach( classItem => {
         if (classItem.includes('type')) {
-            type = classItem;
-        }
-        else {
-            return
+            shipType = classItem;
+        } else {
+            return;
         };
-        
     })
-    loopEachShipSquare(type, function(squareEl) {
-        squareEl.classList.remove(type);
-    })
-    shipState[type].counter = 1;
-    state.shipPrimed = type;
-    root.style.setProperty('--ship-image', e.clientX + "px");
+    return shipType;
 }
 
 
-//This will be a function that will be like for each except it will loop through every element that a ship that has already been placed occupies and runs a given callback function.
+function primeShip(newShipType, oldShipType) {
+    
+}
+
+//This will be a function that will be like the forEach method except it will loop through every element that a ship that has already been placed occupies and runs a given callback function. It accepts the shiptype name as a parameter and a callback function.
 function loopEachShipSquare(shipType, callback) {
     let row = shipState[shipType].coordinate[0];
     let col = shipState[shipType].coordinate[1];
