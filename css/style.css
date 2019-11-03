@@ -8,6 +8,8 @@
     --square-size: 4vw;
     --grid-size: repeat(10, 4vw);
     --axis-grid-size: repeat(11, 4vw);
+    --ship-image: none;
+    --ship-length: 0;
 }
 
 
@@ -71,4 +73,12 @@
     grid-column: 1 span;
     border: 1px solid black;
     margin: 5%;
+}
+
+.grid-container > div:after:hover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-image: var(--ship-image);
+
 }

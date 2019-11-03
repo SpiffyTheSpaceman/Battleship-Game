@@ -122,11 +122,11 @@ class Ship {
 }
 
 const shipState = {
-    carrier: new Ship ([0, 0, 0, 0, 0]),
-    battleship: new Ship ([0, 0, 0, 0]),
-    cruiser: new Ship ([0, 0, 0]),
-    submarine: new Ship ([0, 0, 0]),
-    destroyer: new Ship ([0, 0])
+    typeCarrier: new Ship ([0, 0, 0, 0, 0]),
+    typeBattleship: new Ship ([0, 0, 0, 0]),
+    typeCruiser: new Ship ([0, 0, 0]),
+    typeSubmarine: new Ship ([0, 0, 0]),
+    typeDestroyer: new Ship ([0, 0])
 }
 
 
@@ -135,6 +135,7 @@ const playerBoardEl = document.getElementById('player-grid-container');
 const opponentBoardEl = document.getElementById('opponent-grid-container');
 const playerCoordinateEl = [], opponentCoordinateEl = [];
 const bodyEl = document.querySelector('body');
+const root = document.documentElement;
 
 /*----- event listeners -----*/ 
 playerBoardEl.addEventListener('click', handleSetupBoardClick);
@@ -154,13 +155,11 @@ playerBoardEl.addEventListener('click', handleSetupBoardClick);
 function handleSetupBoardClick(event) {
     //The only purpose of this event handler is to handle the setUp stage on the player's side of the board, so do nothing if it's not even in the set up stage.
     if (state.turnPhase !== 'setup' || event.target.tagName !== 'DIV') {
-        break;
+        return;
     }
     let index = [parseInt(evt.target.id[3]) + parseInt(evt.target.id[5])];
-    // let neighborIndexes = getNeighborIndexes(index[0], index[1]);
-    // let shipExists = checkNeighbors(neighborIndexes[0], neighbordIndexes[1]);
 
-    //If there is no ship selected, and we click on a ship on the board that has already been placed, remove it.
+    //If there is no ship selected, and we click on a ship on the board that has already been placed, remove it and set it as shipPrimed.
     if (!state.shipPrimed) {
         if (event.target.classList.contains('active')) {
             // removeShip(event.target);
@@ -169,18 +168,60 @@ function handleSetupBoardClick(event) {
         else {
             return;
         }
-    }
-
+    } 
 
     //Assuming the ship is primed, if the player clicks on a square in which the ship would overlap the edges of the game board, return and end function.
+    //NOTE: I don't replace any ships that are already on the coordinate here, because if it does replace, it would be placed on a square that overlap the edges of the gameboard.  I am making it so that the currently primed ship overlapping the edges has a higher priority than if there is already a ship there that needs to be replaced to make room for the primed ship.
     if (state.shipOrientation === 'horizontal' && (index[0] + state.shipPrimed - 1) > 9 ||
         (state.shipOrientation === 'vertical' && (index[1] + state.shipPrimed - 1) > 9)) {
         return;
     }
     
     //Assuming the ship is Primed and doesn't overlap, If the elements that the ship would have taken up are already taken by another ship, then replace that ship with the currently primed ship and set the ship that was already active to shipPrimed. 
+    let neighborIndexes = getNeighborIndexes(index[0], index[1]);
+    let shipExists = checkNeighbors(neighborIndexes[0], neighbordIndexes[1]);
      if (shipExists);
 }
+
+
+
+
+function removeShip(squareEl) {
+    let type = '';
+    squareEl.classList.forEach( classItem => {
+        if (classItem.includes('type')) {
+            type = classItem;
+        }
+        else {
+            return
+        };
+        
+    })
+    loopEachShipSquare(type, function(squareEl) {
+        squareEl.classList.remove(type);
+    })
+    shipState[type].counter = 1;
+    state.shipPrimed = type;
+    root.style.setProperty('--ship-image', e.clientX + "px");
+}
+
+
+//This will be a function that will be like for each except it will loop through every element that a ship that has already been placed occupies and runs a given callback function.
+function loopEachShipSquare(shipType, callback) {
+    let row = shipState[shipType].coordinate[0];
+    let col = shipState[shipType].coordinate[1];
+    let shipLength = shipState[shipType].health.length;
+    if (shipState[shipType].orientation === 'horizontal') {
+        for (i = 0; i < shipLength; i++) {
+            callback(playerCoordinateEl[row + i][col]);
+        }
+    } else {
+        for (i = 0; i < shipLength; i++) {
+            callback(playerCoordinateEl[row][col + i]);
+        }
+    }
+}
+
 
 function createGameBoards() {
     for(i=0; i < 10; i++) {
