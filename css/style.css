@@ -8,8 +8,9 @@
     --square-size: 4vw;
     --grid-size: repeat(10, 4vw);
     --axis-grid-size: repeat(11, 4vw);
-    --ship-image: none;
+    --ship-image: transparent;
     --ship-length: 0;
+    --ship-orientation: rotate(90deg);
 }
 
 
@@ -79,8 +80,8 @@
     position: absolute;
     top: 0;
     left: 0;
-    background-image: var(--ship-image);
-
+    background: var(--ship-image);
+    transform: var(--ship-orientation);
 }
 
 .active {
