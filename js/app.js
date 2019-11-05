@@ -1,9 +1,3 @@
-let carrierShip = [0,0,0,0,0];
-let battleShip = [0,0,0,0];
-let cruiserShip = [0,0,0];
-let subMShip = [0,0,0];
-let destroyerShip = [0,0];
-
 
 /* Pseudo Code
 let state.stage = to either Set Up, Playing, Winner, or Loser since there are two main parts to the game: the player's set up stage and the playing stage.
@@ -151,7 +145,7 @@ const readyEl = document.getElementById('ready')
 
 /*----- event listeners -----*/ 
 playerBoardEl.addEventListener('click', handleSetupBoardClick);
-// opponentBoardEl.addEventListener('click', handleAttackBoardClick);
+opponentBoardEl.addEventListener('click', handleAttackBoardClick);
 document.getElementById('player-side').addEventListener('contextmenu', handleRightClick);
 portEl.addEventListener('click', handleShipSelect);
 resetEl.addEventListener('click', init);
@@ -171,13 +165,12 @@ readyEl.addEventListener('click', handleReadyButton);
 function handleShipSelect(event) {
     // If the stage isn't in setUp, do nothing.
     if(state.phase !== 'setup') {
-        console.log('step 1');
         return;
     }
 
     //if a ship wasn't clicked on:
     if (event.target.tagName !== 'IMG') {
-        console.log('step 1b');
+     
         //the primeShip function will unprime the current state.shipPrimed if there is already a primed ship, otherwise, it will just do nothing.
         //primeShip takes two optional arguments: the new ship to be primed and the old ship to be unprimed. Unpriming is used only if a ship is also sent back to port.
         //If either argument is empty or null, it will do nothing in regards to the argument that is empty/null
@@ -187,17 +180,17 @@ function handleShipSelect(event) {
 
     //Get the type of ship that was clicked on. (at this point, event.target is definitely a ship)
     let shipType = findShipType(event.target);
-    console.log('step 1c ' + shipType);
+  
     //Assuming that a ship was clicked on, if the ship clicked on doesn't have anymore left in port (Note: if there is no more left in port, that means the ship was already placed on the board)unprime the currently primed if one exists or else do nothing. OR if the ship clicked on is the same as the ship that is currently primed, just unprime the currently primed ship.
     if ((shipState[shipType].counter === 0) || shipType === state.shipPrimed) {
-        console.log('step 1d');
+       
         primeShip(null, state.shipPrimed);
         return;
     }
 
     //Assuming that a ship was clicked on that has ships in port and not the same as the currently primed ship, use the primeShip function. The primeShip function will unprime the current primed ship first; if there is no currently primed ship, it will just do nothing for it. Then, it will prime the ship that was clicked on.
     primeShip(shipType, state.shipPrimed);
-    console.log('step 1e ' + state.shipPrimed);
+ 
     return;
 }
 
@@ -205,17 +198,17 @@ function handleShipSelect(event) {
 function handleSetupBoardClick(event) {
     //The only purpose of this event handler is to handle the setUp stage on the player's side of the board, so do nothing if it's not even in the set up stage.
     if (state.phase !== 'setup' || event.target.tagName !== 'DIV') {
-        console.log('step 2');
+  
         return;
     }
-    console.log('step 2a');
+    
     let index = [parseInt(event.target.id[3]), parseInt(event.target.id[5])];
 
     //If there is no ship selected, and we click on a ship on the board that has already been placed, remove it and set it as shipPrimed.
     if (!state.shipPrimed) {
-        console.log('step 2b');
+   
         if (event.target.classList.contains('active')) {
-            console.log('step 2c');
+ 
             let shipType = findShipType(event.target);
             removeShip(shipState, shipType);
             primeShip(shipType);
@@ -233,7 +226,7 @@ function handleSetupBoardClick(event) {
     
     if (((state.orientation === 'horizontal') && (index[1] + shipState[state.shipPrimed].health.length - 1) > 9) ||
         ((state.orientation === 'vertical') && (index[0] + shipState[state.shipPrimed].health.length - 1) > 9)) {
-        console.log('step 2d');
+
         return;
     }
     
@@ -241,7 +234,7 @@ function handleSetupBoardClick(event) {
     //Assuming the ship is Primed and doesn't overlap, If the elements that the ship would have taken up are already taken by another ship, then replace that ship with the currently primed ship and set the ship that was previously there to shipPrimed. HOWEVER, if multiple ships exist on the squares it would take up, have it do nothing. If there are no ships there, just add the ship.
     // let neighborIndexes = getNeighborIndexes(index[0], index[1]);
     let neighboringShips = [];
-    console.log('step 2e');
+
     //This will loop through each neighboring element and push each unique ship type that exists in the neighboring elements into the neighboringShips Array.
     loopEachShipSquare(shipState, state.shipPrimed, (element) => {
         let shipType = findShipType(element);
@@ -253,8 +246,7 @@ function handleSetupBoardClick(event) {
             }
         };
     }, index[0], index[1]);
-    console.log(neighboringShips);
-    // console.log('step 2f');
+
     //If there are multiple ships already on the square that the ship would take up, do nothing.
     if (neighboringShips.length > 1) {
         return;
@@ -269,7 +261,6 @@ function handleSetupBoardClick(event) {
         addShip(shipState, state.shipPrimed, index[0], index[1]);
         primeShip(neighboringShips[0]);
     } 
-    console.log('step 2g');
 
     
 }
@@ -279,7 +270,7 @@ function handleSetupBoardClick(event) {
 function loopEachShipSquare(playerState, shipType, callback, row = playerState[shipType].coordinate[0], col = playerState[shipType].coordinate[1]) {
     // let row = shipState[shipType].coordinate[0];
     // let col = shipState[shipType].coordinate[1];
-    boardEl = (playerState === shipState ? playerCoordinateEl : opponentCoordinateEl);
+    let boardEl = (playerState === shipState ? playerCoordinateEl : opponentCoordinateEl);
     let shipLength = playerState[shipType].health.length;
     if (playerState[shipType].orientation === 'horizontal') {
         for (i = 0; i < shipLength; i++) {
@@ -431,7 +422,7 @@ function setUpEnemyBoard() {
         let row = null;
         let col = null;
         let squareAvailable = false;
-        console.log('step 2e');
+
         //This will decide if a random place on the board to place a ship is available to be placed.
         while (squareAvailable === false) {
             row = Math.floor(Math.random() * 10);
@@ -457,73 +448,54 @@ function setUpEnemyBoard() {
                 , row, col);
             }
         }
-        console.log(enemyShipState[ship].orientation);
+        //finally, add the ship to the board.
         addShip(enemyShipState, ship, row, col);
     }
 }
 
-function handleAttack() {
+function handleAttack(row, col) {
+    let squareEl, playerState;
+    //Determine which board and state we are messing with based on whose turn it was.
+    if (state.turn === 1) {
+        squareEl = opponentCoordinateEl[row][col];
+        playerState = shipState;
 
+    } else {
+        squareEl = playerCoordinateEl[row][col];
+        playerState = enemyShipState;
+    }
+    console.log(squareEl);
+    let shipType = findShipType(squareEl);
+    console.log(shipType);
+    let healthIndex = null;
+    //If there is a ship on the square, mark the square as hit and update the ship's state's health.
+    if (shipType) {
+        squareEl.classList.add('hit');
+        healthIndex = (playerState[shipType].orientation === 'horizontal') 
+            ? (col - playerState[shipType].coordinate[1]) 
+            : (healthIndex = row - playerState[shipType].coordinate[0]);
+        playerState[shipType].health[healthIndex] = 1;
+    } else {
+        squareEl.classList.add('missed');
+    }
+    //change the turn.
+    state.turn *= -1;
+    render();
 }
 
-// function handleAttackBoardClick(event) {
-//    //If it is not the playing stage or not even a square, do nothing.
-//    if (state.phase !== 'playing' || event.target.tagName !== 'DIV' || turn !== 1) {
-//         return;
-//     }
-//     let index = [parseInt(event.target.id[3]), parseInt(event.target.id[5])];
-//     let shipType = findShipType(event.target);
-//     if (shipType) {
-//         event.target.classList.add('hit');
-//     }
-//     enemyShipState[]
-
-
-// //Assuming the ship is primed, if the player clicks on a square in which the ship would overlap the edges of the game board, return and end function.
-// //NOTE: I don't replace any ships that are already on the coordinate here, because if it does replace, it would be placed on a square that overlap the edges of the gameboard.  I am making it so that the currently primed ship overlapping the edges has a higher priority than if there is already a ship there that needs to be replaced to make room for the primed ship.
-
-// if (((state.orientation === 'horizontal') && (index[1] + shipState[state.shipPrimed].health.length - 1) > 9) ||
-//     ((state.orientation === 'vertical') && (index[0] + shipState[state.shipPrimed].health.length - 1) > 9)) {
-//     console.log('step 2d');
-//     return;
-// }
-
-
-// //Assuming the ship is Primed and doesn't overlap, If the elements that the ship would have taken up are already taken by another ship, then replace that ship with the currently primed ship and set the ship that was previously there to shipPrimed. HOWEVER, if multiple ships exist on the squares it would take up, have it do nothing. If there are no ships there, just add the ship.
-// // let neighborIndexes = getNeighborIndexes(index[0], index[1]);
-// let neighboringShips = [];
-// console.log('step 2e');
-// //This will loop through each neighboring element and push each unique ship type that exists in the neighboring elements into the neighboringShips Array.
-// loopEachShipSquare(shipState, state.shipPrimed, (element) => {
-//     let shipType = findShipType(element);
-//     if (shipType) {
-//         if (neighboringShips.length === 0) {
-//             neighboringShips.push(shipType)
-//         } else if (neighboringShips.length > 0 && !neighboringShips.includes(shipType)) {
-//             neighboringShips.push(shipType);
-//         }
-//     };
-// }, index[0], index[1]);
-// console.log(neighboringShips);
-// // console.log('step 2f');
-// //If there are multiple ships already on the square that the ship would take up, do nothing.
-// if (neighboringShips.length > 1) {
-//     return;
-// //If there are no ships on the neighboring squares, just add the ship.
-// } else if (neighboringShips.length === 0 ) {
-//     addShip(shipState, state.shipPrimed, index[0], index[1]);
-//     //we only need to render here because, if the game is ready, the last ship should only be placed and not replaced.
-//     render();
-// //If there is only 1 ship on the neighboring squares, replace the ship.
-// } else if (neighboringShips.length === 1) {
-//     removeShip(shipState, neighboringShips[0]);
-//     addShip(shipState, state.shipPrimed, index[0], index[1]);
-//     primeShip(neighboringShips[0]);
-// } 
-// console.log('step 2g');
-
-
-// }
+function handleAttackBoardClick(event) {
+   //If it is not the playing stage or not even a square, do nothing. If the square has already been clicked on before, do nothing.
+   if (state.phase !== 'playing' 
+        || event.target.tagName !== 'DIV' 
+        || state.turn !== 1
+        || event.target.classList.contains('hit')
+        || event.target.classList.contains('missed')) {
+        return;
+    }
+    let index = [parseInt(event.target.id[3]), parseInt(event.target.id[5])];
+    handleAttack(index[0], index[1]);
+    // triggerAi();
+}
 
 
 function init() {

@@ -77,11 +77,16 @@
     margin: 5%;
 }
 
-.grid-container > .active {
+.grid-container div:hover {
+    cursor: pointer;
+}
+
+
+#player-grid-container > .active {
     background-color: red;
 }
 
-.grid-container > div:hover {
+#player-grid-container > div:hover {
     /* position: absolute; */
     /* top: 0; */
     /* left: 0; */
@@ -89,6 +94,25 @@
     background: var(--ship-image);
     /* transform: var(--ship-orientation); */
 }
+
+#opponent-grid-container > .active {
+    background-color: orange;
+}
+
+#opponent-grid-container > div.missed {
+    border: 1px solid greenyellow;
+}
+
+#opponent-grid-container > div.hit {
+    border: 1px solid red;
+}
+
+
+
+
+
+
+
 
 #battleships-container {
     background: burlywood;
