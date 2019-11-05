@@ -141,7 +141,7 @@ const root = document.documentElement;
 /*----- event listeners -----*/ 
 playerBoardEl.addEventListener('click', handleSetupBoardClick);
 // opponentBoardEl.addEventListener('click', handleAttackBoardClick);
-playerBoardEl.addEventListener('contextmenu', handleRightClick);
+// playerBoardEl.addEventListener('contextmenu', handleRightClick);
 portEl.addEventListener('click', handleShipSelect);
 
 /*----- functions -----*/
@@ -163,56 +163,38 @@ function handleShipSelect(event) {
 
     //if a ship wasn't clicked on:
     if (event.target.tagName !== 'IMG') {
-        //if a ship isn't primed, do nothing.
-        if (!state.shipPrimed) {
-            return;
-        //if a ship is primed, unprime it and end function.
-        } else {
-            primeShip(null, state.shipPrimed);
-            return;
-        }
-    }
-
-    //if a ship isn't primed and a ship wasn't cliked on, do nothing.
-    if (!state.shipPrimed && event.target.tagName !== 'IMG') {
+        //the primeShip function will unprime the current state.shipPrimed if there is already a primed ship, if there is no primed ship, it will just do nothing.
+        primeShip(null, state.shipPrimed);
         return;
-    }
-
-    //if a ship is primed and a ship wasn't clicked on:
-    if (state.shipPrimed && event.target.tagName !== 'IMG') {
-
     }
 
     //Get the type of ship that was clicked on.
     let shipType = findShipType(event.target);
 
-    //if a ship is primed.
-    if(state.shipPrimed) {
-
-    }
-
-
-    //If there is no more of the selected type's ship, do nothing.
-    if(shipState[shipType].counter === 0) {
+    //Assuming that a ship was clicked on, if the ship clicked on doesn't have anymore left in port (Note: if there is no more left in port, that means the ship was already placed on the board)unprime the currently primed if one exists or else do nothing. OR if the ship clicked on is the same as the ship that is currently primed, just unprime the currently primed ship.
+    if ((shipState[shipType].counter === 0) || shipType === state.shipPrimed) {
+        primeShip(null, state.shipPrimed);
         return;
     }
-     
-    //Assuming the ship type is available, Prime the ship, or replace the currently primed ship with the ship just clicked on. the primeShip function accepts 2 optional arguments. It will prime the first argument's ship type and it will unprime the second argument's ship type.
-    primeShip(shipType, state.shipPrimed);
 
+    //Assuming that a ship was clicked on that has ships in port and not the same as the currently primed ship, use the primeShip function. The primeShip function will unprime the current primed ship first; if there is no currently primed ship, it will just do nothing. Then, prime the ship that was clicked on.
+    primeShip(shipType, state.shipPrimed);
+    return;
 }
+
 
 function handleSetupBoardClick(event) {
     //The only purpose of this event handler is to handle the setUp stage on the player's side of the board, so do nothing if it's not even in the set up stage.
     if (state.turnPhase !== 'setup' || event.target.tagName !== 'DIV') {
         return;
     }
-    let index = [parseInt(evt.target.id[3]) + parseInt(evt.target.id[5])];
+    let index = [parseInt(evt.target.id[3]), parseInt(evt.target.id[5])];
 
     //If there is no ship selected, and we click on a ship on the board that has already been placed, remove it and set it as shipPrimed.
     if (!state.shipPrimed) {
         if (event.target.classList.contains('active')) {
-            removeShip(event.target);
+            let shipType = findShipType(event.target);
+            removeShip(shipType);
             return;
         }
         else {
@@ -222,31 +204,73 @@ function handleSetupBoardClick(event) {
 
     //Assuming the ship is primed, if the player clicks on a square in which the ship would overlap the edges of the game board, return and end function.
     //NOTE: I don't replace any ships that are already on the coordinate here, because if it does replace, it would be placed on a square that overlap the edges of the gameboard.  I am making it so that the currently primed ship overlapping the edges has a higher priority than if there is already a ship there that needs to be replaced to make room for the primed ship.
-    if (state.shipOrientation === 'horizontal' && (index[0] + state.shipPrimed - 1) > 9 ||
-        (state.shipOrientation === 'vertical' && (index[1] + state.shipPrimed - 1) > 9)) {
+    
+    if (state.shipOrientation === 'horizontal' && (index[0] + shipState[state.shipPrimed].health.length - 1) > 9 ||
+        (state.shipOrientation === 'vertical' && (index[1] + shipState[state.shipPrimed].health.length - 1) > 9)) {
         return;
     }
     
-    //Assuming the ship is Primed and doesn't overlap, If the elements that the ship would have taken up are already taken by another ship, then replace that ship with the currently primed ship and set the ship that was already active to shipPrimed. 
-    let neighborIndexes = getNeighborIndexes(index[0], index[1]);
+    //Assuming the ship is Primed and doesn't overlap, If the elements that the ship would have taken up are already taken by another ship, then replace that ship with the currently primed ship and set the ship that was already active to shipPrimed. HOWEVER, if multiple ships exist on the squares it would take up, have it do nothing.
+    // let neighborIndexes = getNeighborIndexes(index[0], index[1]);
+    let neighboringShips = [];
+
+
+    //This will loop through each neighboring element and push each unique ship type that exists in the neighboring elements into the neighboringShips Array.
+    loopEachShipSquare(state.shipPrimed, (element) => {
+        let shipType = findShipType(element);
+        if (shipType) {
+            if (neighboringShips.length === 0) {
+                neighboringShips.push(shipType);
+            } else if (neighboringShips.length > 0 && !neighboringShips.includes(type)) {
+                neighboringShips.push(shipType);
+            }
+        };
+    }
+    , index[0], index[1])
+    //If there are multiple ships already on the square that the ship would take up, do nothing.
+    if (neighboringShips.length > 1) {
+        return;
+    }
+    if (neighboringShips.length === 1) {
+        addShip();
+    } 
     let shipExists = checkNeighbors(neighborIndexes[0], neighbordIndexes[1]);
      if (shipExists);
 }
 
 
+//This will be a function that will be like the forEach method except it will loop through every element that a ship that has already been placed occupies and runs a given callback function. It accepts the shiptype name as a parameter and a callback function. The row and col values by default will be based on the ship's starting coordinate on the board, however, it can be specified such as if we are checking the rows and col for a ship not yet placed but rather, pending placement.
+function loopEachShipSquare(shipType, callback, row = shipState[shipType].coordinate[0], col = shipState[shipType].coordinate[1]) {
+    // let row = shipState[shipType].coordinate[0];
+    // let col = shipState[shipType].coordinate[1];
+    let shipLength = shipState[shipType].health.length;
+    if (shipState[shipType].orientation === 'horizontal') {
+        for (i = 0; i < shipLength; i++) {
+            callback(playerCoordinateEl[row + i][col]);
+        }
+    } else {
+        for (i = 0; i < shipLength; i++) {
+            callback(playerCoordinateEl[row][col + i]);
+        }
+    }
+}
 
 
-function removeShip(squareEl) {
-    let shipType = findShipType(squareEl);
-    loopEachShipSquare(shipType, function(squareEl) {
-        squareEl.classList.remove(shipType);
+
+
+//This function will remove a ship from the player's board and set that ship to be primed instead.
+function removeShip(shipType) {
+    loopEachShipSquare(shipType, function(element) {
+        element.classList.remove(shipType, 'active');
     })
     primeShip(shipType);
 }
 
+
+
 //This will be a function that will go through the classNames of a DOM Element and see if there is a class of ship type. If so, it will return the name of that ship type, otherwise it will return an empty string.
 function findShipType(element) {
-    let shipType = '';
+    let shipType;
     element.classList.forEach( classItem => {
         if (classItem.includes('type')) {
             shipType = classItem;
@@ -257,17 +281,24 @@ function findShipType(element) {
     return shipType;
 }
 
+
+
+
 //This is a function that will prime newShipType and unprime oldShipType. They are optional arguments.
 function primeShip(newShipType, oldShipType) {
     if (oldShipType) {
         shipState[oldShipType].counter = 1;
-        state.shipPrimed = null;
         shipState[oldShipType].orientation = 'horizontal';
-        //render the changes for the "primed" effect.
-        root.style.setProperty('--ship-image', 'transparent');
-        root.style.setProperty('--ship-orientation', 'horizontal');
+        //render the changes if the function is JUST unpriming and not priming.
+        if (!newShipType) {
+            state.shipPrimed = null;
+            root.style.setProperty('--ship-image', 'transparent');
+            root.style.setProperty('--ship-orientation', 'horizontal');
+            return;
+        }
     }
-    if(newShipType) {
+
+    if (newShipType) {
         //Change the ship counter since it is in prime, it means it hasn't been placed yet.
         shipState[newShipType].counter = 1;
         state.shipPrimed = newShipType;
@@ -282,28 +313,11 @@ function primeShip(newShipType, oldShipType) {
 
 
 
-//This will be a function that will be like the forEach method except it will loop through every element that a ship that has already been placed occupies and runs a given callback function. It accepts the shiptype name as a parameter and a callback function. 
-function loopEachShipSquare(shipType, callback) {
-    let row = shipState[shipType].coordinate[0];
-    let col = shipState[shipType].coordinate[1];
-    let shipLength = shipState[shipType].health.length;
-    if (shipState[shipType].orientation === 'horizontal') {
-        for (i = 0; i < shipLength; i++) {
-            callback(playerCoordinateEl[row + i][col]);
-        }
-    } else {
-        for (i = 0; i < shipLength; i++) {
-            callback(playerCoordinateEl[row][col + i]);
-        }
-    }
-}
-
-
 function createGameBoards() {
-    for(i=0; i < 10; i++) {
+    for (i=0; i < 10; i++) {
         playerCoordinateEl.push([]);
         opponentCoordinateEl.push([]);
-        for(j=0; j < 10; j++) {
+        for (j=0; j < 10; j++) {
             playerCoordinateEl[i][j] = document.createElement('div');
             opponentCoordinateEl[i][j] = document.createElement('div');
             playerCoordinateEl[i][j].id = `p-r${i}c${j}`;
