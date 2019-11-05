@@ -106,6 +106,8 @@ const state = {
     turn: 1
 }
 
+const pastAiChoice = [];
+
 //the ship coordinate represents the coordinate the front of the ship is at on the game board.
 class Ship {
     constructor(health, imageURL) {
@@ -464,9 +466,7 @@ function handleAttack(row, col) {
         squareEl = playerCoordinateEl[row][col];
         playerState = enemyShipState;
     }
-    console.log(squareEl);
     let shipType = findShipType(squareEl);
-    console.log(shipType);
     let healthIndex = null;
     //If there is a ship on the square, mark the square as hit and update the ship's state's health.
     if (shipType) {
@@ -475,12 +475,21 @@ function handleAttack(row, col) {
             ? (col - playerState[shipType].coordinate[1]) 
             : (healthIndex = row - playerState[shipType].coordinate[0]);
         playerState[shipType].health[healthIndex] = 1;
+        checkShipSunk(playerState, shipType);
     } else {
         squareEl.classList.add('missed');
     }
     //change the turn.
     state.turn *= -1;
     render();
+}
+
+function checkShipSunk(playerState, shipType) {
+    if (!playerState[shipType].health.includes(0)) {
+        loopEachShipSquare(playerState, shipType, (element) => {
+            
+        })
+    }
 }
 
 function handleAttackBoardClick(event) {
@@ -497,6 +506,15 @@ function handleAttackBoardClick(event) {
     // triggerAi();
 }
 
+function triggerAi() {
+    //If the game is over, do nothing.
+    if (state.phase !== 'playing') {
+        return;
+    }
+    if (pastAiChoice.length === 0) {
+
+    }
+}
 
 function init() {
     state.phase = 'setup';
@@ -525,7 +543,7 @@ function render () {
     //Render ready button.
     if (state.phase !== 'setup') {
         readyEl.className = '';
-    } else {
+    } else if (state.phase === 'setup') {
         let unplacedShips = 0;
         for (let ship in shipState) {
             unplacedShips += shipState[ship].counter
@@ -536,6 +554,44 @@ function render () {
             readyEl.className = '';
         }
 
+    }
+    
+    //check if any ships sunk.
+    if (state.phase === 'playing') {
+        let playerDeadCount = 0;
+        let computerDeadCount = 0;
+        for (let ship in shipState) {
+            if (!shipState[ship].health.includes(0)) {
+                playerDeadCount += 1;
+            }
+        }
+        for (let ship in enemyShipState) {
+            if (!enemyShipState[ship].health.includes(0)) {
+                computerDeadCount += 1;
+            }
+        }
+
+    //Render if Winner
+    if (state.phase === 'playing') {
+        let playerDeadCount = 0;
+        let computerDeadCount = 0;
+        for (let ship in shipState) {
+            if (!shipState[ship].health.includes(0)) {
+                playerDeadCount += 1;
+            }
+        }
+        for (let ship in enemyShipState) {
+            if (!enemyShipState[ship].health.includes(0)) {
+                computerDeadCount += 1;
+            }
+        }
+        if (playerDeadCount === 0) {
+            state.phase === 'Over';
+            console.log('You Won!');
+        } else if (computerDeadCount === 0) {
+            state.phase === 'Over';
+            console.log('Skynet Won!');
+        }
     }
 }
 
