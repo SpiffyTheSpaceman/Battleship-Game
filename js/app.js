@@ -119,7 +119,7 @@ class Ship {
     }
 }
 
-const shipState = {
+const playerShipState = {
     typeCarrier: new Ship ([0, 0, 0, 0, 0]),
     typeBattleship: new Ship ([0, 0, 0, 0]),
     typeCruiser: new Ship ([0, 0, 0]),
@@ -191,7 +191,7 @@ function handleShipSelect(event) {
     let shipType = findShipType(event.target);
   
     //Assuming that a ship was clicked on, if the ship clicked on doesn't have anymore left in port (Note: if there is no more left in port, that means the ship was already placed on the board)unprime the currently primed if one exists or else do nothing. OR if the ship clicked on is the same as the ship that is currently primed, just unprime the currently primed ship.
-    if ((shipState[shipType].counter === 0) || shipType === state.shipPrimed) {
+    if ((playerShipState[shipType].counter === 0) || shipType === state.shipPrimed) {
        
         primeShip(null, state.shipPrimed);
         return;
@@ -219,7 +219,7 @@ function handleSetupBoardClick(event) {
         if (event.target.classList.contains('active')) {
  
             let shipType = findShipType(event.target);
-            removeShip(shipState, shipType);
+            removeShip(playerShipState, shipType);
             primeShip(shipType);
             //We only need to render here because if a ship is removed and all the ships are used is the only case when the ready button's state should be set to unclickable again. If a ship was just merely replaced with another ship, it should have never been ready to begin with.
             render();
@@ -233,8 +233,8 @@ function handleSetupBoardClick(event) {
     //Assuming the ship is primed, if the player clicks on a square in which the ship would overlap the edges of the game board, return and end function.
     //NOTE: I don't replace any ships that are already on the coordinate here, because if it does replace, it would be placed on a square that overlap the edges of the gameboard.  I am making it so that the currently primed ship overlapping the edges has a higher priority than if there is already a ship there that needs to be replaced to make room for the primed ship.
     
-    if (((state.orientation === 'horizontal') && (index[1] + shipState[state.shipPrimed].health.length - 1) > 9) ||
-        ((state.orientation === 'vertical') && (index[0] + shipState[state.shipPrimed].health.length - 1) > 9)) {
+    if (((state.orientation === 'horizontal') && (index[1] + playerShipState[state.shipPrimed].health.length - 1) > 9) ||
+        ((state.orientation === 'vertical') && (index[0] + playerShipState[state.shipPrimed].health.length - 1) > 9)) {
 
         return;
     }
@@ -245,7 +245,7 @@ function handleSetupBoardClick(event) {
     let neighboringShips = [];
 
     //This will loop through each neighboring element and push each unique ship type that exists in the neighboring elements into the neighboringShips Array.
-    loopEachShipSquare(shipState, state.shipPrimed, (element) => {
+    loopEachShipSquare(playerShipState, state.shipPrimed, (element) => {
         let shipType = findShipType(element);
         if (shipType) {
             if (neighboringShips.length === 0) {
@@ -261,13 +261,13 @@ function handleSetupBoardClick(event) {
         return;
     //If there are no ships on the neighboring squares, just add the ship.
     } else if (neighboringShips.length === 0 ) {
-        addShip(shipState, state.shipPrimed, index[0], index[1]);
+        addShip(playerShipState, state.shipPrimed, index[0], index[1]);
         //we only need to render here because, if the game is ready, the last ship should only be placed and not replaced.
         render();
     //If there is only 1 ship on the neighboring squares, replace the ship.
     } else if (neighboringShips.length === 1) {
-        removeShip(shipState, neighboringShips[0]);
-        addShip(shipState, state.shipPrimed, index[0], index[1]);
+        removeShip(playerShipState, neighboringShips[0]);
+        addShip(playerShipState, state.shipPrimed, index[0], index[1]);
         primeShip(neighboringShips[0]);
     } 
 
@@ -275,13 +275,13 @@ function handleSetupBoardClick(event) {
 }
 
 
-//This will be a function that will be like the forEach method except it will loop through every element that a ship that has already been placed occupies and runs a given callback function. It accepts the shipState object and shiptype name as a parameter and a callback function. The row and col values by default will be based on the ship's starting coordinate on the board, however, it can be specified such as if we are checking the rows and col for a ship not yet placed but rather, pending placement.
-function loopEachShipSquare(playerState, shipType, callback, row = playerState[shipType].coordinate[0], col = playerState[shipType].coordinate[1]) {
-    // let row = shipState[shipType].coordinate[0];
-    // let col = shipState[shipType].coordinate[1];
-    let boardEl = (playerState === shipState ? playerCoordinateEl : opponentCoordinateEl);
-    let shipLength = playerState[shipType].health.length;
-    if (playerState[shipType].orientation === 'horizontal') {
+//This will be a function that will be like the forEach method except it will loop through every element that a ship that has already been placed occupies and runs a given callback function. It accepts the playerShipState object and shiptype name as a parameter and a callback function. The row and col values by default will be based on the ship's starting coordinate on the board, however, it can be specified such as if we are checking the rows and col for a ship not yet placed but rather, pending placement.
+function loopEachShipSquare(shipState, shipType, callback, row = shipState[shipType].coordinate[0], col = shipState[shipType].coordinate[1]) {
+    // let row = playerShipState[shipType].coordinate[0];
+    // let col = playerShipState[shipType].coordinate[1];
+    let boardEl = (shipState === playerShipState ? playerCoordinateEl : opponentCoordinateEl);
+    let shipLength = shipState[shipType].health.length;
+    if (shipState[shipType].orientation === 'horizontal') {
         for (i = 0; i < shipLength; i++) {
             callback(boardEl[row][col + i]);
         }
@@ -292,30 +292,30 @@ function loopEachShipSquare(playerState, shipType, callback, row = playerState[s
     }
 }
 
-//This function accepts the shipState object (stored in playerState), ship type, and the row, col of the index of the element where the ship is to be added. 
-function addShip(playerState, shipType, row, col) {
-    playerState[shipType].counter = 0;
-    playerState[shipType].coordinate = [row, col];
+//This function accepts the playerShipState object (stored in shipState), ship type, and the row, col of the index of the element where the ship is to be added. 
+function addShip(shipState, shipType, row, col) {
+    shipState[shipType].counter = 0;
+    shipState[shipType].coordinate = [row, col];
     //These changes in stylings and state only apply during the setup phase.
     if (state.phase === 'setup') {
-        //Based on the other code, the shipState.type.orientation should already be the same as state.orientation, but this is just a safety check.
-        playerState[shipType].orientation = state.orientation;
+        //Based on the other code, the playerShipState.type.orientation should already be the same as state.orientation, but this is just a safety check.
+        shipState[shipType].orientation = state.orientation;
         state.shipPrimed = null;
         root.style.setProperty('--ship-image', 'transparent');
         root.style.setProperty('--ship-orientation', 'none');
     }
-    loopEachShipSquare(playerState, shipType, function(element) {
+    loopEachShipSquare(shipState, shipType, function(element) {
         element.classList.add(shipType, 'active');
     })
 }
 
-//This function will remove a ship from the board for the given shipState object stored in playerState
-function removeShip(playerState, shipType) {
-    loopEachShipSquare(playerState, shipType, function(element) {
+//This function will remove a ship from the board for the given playerShipState object stored in shipState
+function removeShip(shipState, shipType) {
+    loopEachShipSquare(shipState, shipType, function(element) {
         element.classList.remove(shipType, 'active');
     });
-    playerState[shipType].counter = 1;
-    playerState[shipType].coordinate = [null, null];
+    shipState[shipType].counter = 1;
+    shipState[shipType].coordinate = [null, null];
 }
 
 
@@ -339,7 +339,7 @@ function findShipType(element) {
 //This is a function that will prime newShipType and unprime oldShipType. They are optional arguments. Only unprime the oldShipType if you have to send the oldShipType back to the port and reset it to the default orientation.
 function primeShip(newShipType, oldShipType) {
     if (oldShipType) {
-        shipState[oldShipType].orientation = 'horizontal';
+        playerShipState[oldShipType].orientation = 'horizontal';
         //We dont change ship counter when unpriming since it may be placed on the board (counter = 0) or someone simply selected another ship in the port (counter stays = 1).
         //render the changes if the function is JUST unpriming and not priming.
         if (!newShipType) {
@@ -352,10 +352,10 @@ function primeShip(newShipType, oldShipType) {
 
     if (newShipType) {
         //Change the ship counter since it is in prime, it means it hasn't been placed yet.
-        shipState[newShipType].counter = 1;
+        playerShipState[newShipType].counter = 1;
         state.shipPrimed = newShipType;
         //the state.orientation will have the same current orientation of the ship clicked on. If the ship is in port, it should be horizontal, if it is on the board already, it should be the orientation of how it is placed on the board.
-        state.orientation = shipState[newShipType].orientation;
+        state.orientation = playerShipState[newShipType].orientation;
         //below is the rerendering, have to decide if it will be done in a render function or not.
         root.style.setProperty('--ship-image', 'blue');
         root.style.setProperty('--ship-orientation', (state.orientation === 'horizontal' ? 'none' : 'rotate(90deg)'));
@@ -371,8 +371,8 @@ function handleReadyButton(event) {
         return;
     }
     let unplacedShips = 0;
-    for (let ship in shipState) {
-        unplacedShips += shipState[ship].counter
+    for (let ship in playerShipState) {
+        unplacedShips += playerShipState[ship].counter
     }
     if (unplacedShips !== 0) {
         return;
@@ -380,7 +380,9 @@ function handleReadyButton(event) {
         state.phase = 'pending';
         setUpEnemyBoard();
         state.phase = 'playing';
-        event.target.textContent = 'PLAYING!'
+        event.target.textContent = 'PLAYING!';
+        sinkMessageEl.textContent = ``;
+        sinkMessageEl.style.backgroundColor = 'transparent';
         render();
     }
 }
@@ -397,7 +399,7 @@ function handleRightClick(event) {
         } else if (state.orientation === 'vertical') {
             state.orientation = 'horizontal';
         }
-        shipState[state.shipPrimed].orientation = state.orientation;
+        playerShipState[state.shipPrimed].orientation = state.orientation;
     }
 }
 
@@ -463,30 +465,30 @@ function setUpEnemyBoard() {
 }
 
 function handleAttack(row, col) {
-    let squareEl, playerState;
+    let squareEl, shipState;
     //Determine which board and state we are messing with based on whose turn it was.
     if (state.turn === 1) {
         squareEl = opponentCoordinateEl[row][col];
-        playerState = enemyShipState;
+        shipState = enemyShipState;
 
     } else {
         squareEl = playerCoordinateEl[row][col];
-        playerState = shipState;
+        shipState = playerShipState;
     }
     let shipType = findShipType(squareEl);
     let healthIndex = null;
     //If there is a ship on the square, mark the square as hit and update the ship's state's health.
     if (shipType) {
         squareEl.classList.add('hit');
-        healthIndex = (playerState[shipType].orientation === 'horizontal') 
-            ? (col - playerState[shipType].coordinate[1]) 
-            : (row - playerState[shipType].coordinate[0]);
-        console.log(healthIndex, row, col, playerState[shipType].coordinate[0],  playerState[shipType].coordinate[1]);
-        playerState[shipType].health[healthIndex] = 1;
+        healthIndex = (shipState[shipType].orientation === 'horizontal') 
+            ? (col - shipState[shipType].coordinate[1]) 
+            : (row - shipState[shipType].coordinate[0]);
+        console.log(healthIndex, row, col, shipState[shipType].coordinate[0],  shipState[shipType].coordinate[1]);
+        shipState[shipType].health[healthIndex] = 1;
         // if (state.turn === -1) {
         //     pastAiChoice.push
         // }
-        checkShipSunk(playerState, shipType);
+        checkShipSunk(shipState, shipType);
     } else {
         squareEl.classList.add('missed');
     }
@@ -495,15 +497,17 @@ function handleAttack(row, col) {
     render();
 }
 
-function checkShipSunk(playerState, shipType) {
-    if (!playerState[shipType].health.includes(0)) {
-        loopEachShipSquare(playerState, shipType, (element) => {
+
+//This is a function that will check if a ship has been sunk after each hit.
+function checkShipSunk(shipState, shipType) {
+    if (!shipState[shipType].health.includes(0)) {
+        loopEachShipSquare(shipState, shipType, (element) => {
             element.classList.add('sunk');
         })
         let shipName = shipType.substr(4);
         let attacker = (state.turn === 1) ? 'You' : 'Skynet has';
-        sinkMessageEl.textContent = `${attacker} sunk a ${shipName}!`
-        sinkMessageEl.style.backGroundColor = (state.turn === 1) ? '#ED1612' : '#12E9ED'
+        sinkMessageEl.textContent = `${attacker} sunk a ${shipName}!`;
+        sinkMessageEl.style.backgroundColor = (state.turn === 1) ? '#12E9ED' : '#ED1612';
     }
 }
 
@@ -532,13 +536,25 @@ function triggerAi() {
         let row = null;
         let col = null;
         let squareAvailable = false;
+
+        //This is to test the Ai's win conditions.
+        // row = playerShipState.typeDestroyer.coordinate[0];
+        // col = playerShipState.typeDestroyer.coordinate[1];
+        // if (playerCoordinateEl[row][col].classList.contains('hit') 
+        // || playerCoordinateEl[row][col].classList.contains('missed') ) {
+        //     if (playerShipState.typeDestroyer.orientation === 'horizontal') {
+        //         col += 1;
+        //     } else {
+        //         row += 1;
+        //     }
+        // }
     
         //This will decide if a random place on the board to place a ship is available to be placed.
         while (squareAvailable === false) {
             row = Math.floor(Math.random() * 10);
             col = Math.floor(Math.random() * 10);
-            if (!opponentCoordinateEl[row][col].classList.contains('hit')
-            && !opponentCoordinateEl[row][col].classList.contains('missed')) {
+            if (!playerCoordinateEl[row][col].classList.contains('hit')
+            && !playerCoordinateEl[row][col].classList.contains('missed')) {
                 squareAvailable = true;
             }
         }
@@ -555,11 +571,11 @@ function init() {
             opponentCoordinateEl[row][col].className = '';
         }
     }
-    for (let ship in shipState) {
-        shipState[ship].orientation = 'horizontal';
-        shipState[ship].health.fill(0);
-        shipState[ship].coordinate = [null, null];
-        shipState[ship].counter = 1;
+    for (let ship in playerShipState) {
+        playerShipState[ship].orientation = 'horizontal';
+        playerShipState[ship].health.fill(0);
+        playerShipState[ship].coordinate = [null, null];
+        playerShipState[ship].counter = 1;
     }
     for (let ship in enemyShipState) {
         enemyShipState[ship].orientation = 'horizontal';
@@ -567,6 +583,10 @@ function init() {
         enemyShipState[ship].coordinate = [null, null];
         enemyShipState[ship].counter = 1;
     }
+    winMessageEl.textContent = 'Set up your Ships!';
+    winMessageEl.style.backgroundColor = 'transparent';
+    sinkMessageEl.textContent = `Left Click to Select and Place the Ships, Right Click to Rotate the Ship`;
+    sinkMessageEl.style.backgroundColor = 'transparent';
 }
 
 function render () {
@@ -575,8 +595,8 @@ function render () {
         readyEl.className = '';
     } else if (state.phase === 'setup') {
         let unplacedShips = 0;
-        for (let ship in shipState) {
-            unplacedShips += shipState[ship].counter
+        for (let ship in playerShipState) {
+            unplacedShips += playerShipState[ship].counter
         }
         if (unplacedShips === 0) {
             readyEl.className = 'active';
@@ -586,12 +606,13 @@ function render () {
 
     }
 
+
     //Render if Winner
     if (state.phase === 'playing') {
         let playerDeadCount = 0;
         let computerDeadCount = 0;
-        for (let ship in shipState) {
-            if (!shipState[ship].health.includes(0)) {
+        for (let ship in playerShipState) {
+            if (!playerShipState[ship].health.includes(0)) {
                 playerDeadCount += 1;
             }
         }
@@ -607,7 +628,13 @@ function render () {
             state.phase === 'Over';
             console.log('Skynet Won!');
         }
+         //Render whose turn it is
+         if (state.turn === 1) {
+             winMessageEl.textContent = 'It is your turn, ATTACK!';
+             winMessageEl.style.backgroundColor = 'transparent';
+         }
     }
+    
 }
 
 createGameBoards();
