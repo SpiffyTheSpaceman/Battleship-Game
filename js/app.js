@@ -110,12 +110,12 @@ const pastAiChoice = [];
 
 //the ship coordinate represents the coordinate the front of the ship is at on the game board.
 class Ship {
-    constructor(health, imageURL) {
+    constructor(health, image) {
         this.health = health;
         this.orientation = 'horizontal';
         this.coordinate = [null, null];
         this.counter = 1;
-        this.image = imageURL;
+        this.image = image;
     }
 }
 
@@ -123,7 +123,7 @@ const playerShipState = {
     typeCarrier: new Ship ([0, 0, 0, 0, 0]),
     typeBattleship: new Ship ([0, 0, 0, 0]),
     typeCruiser: new Ship ([0, 0, 0]),
-    typeSubmarine: new Ship ([0, 0, 0]),
+    typeSubmarine: new Ship ([0, 0, 0], '/src/assets/Submarine.png'),
     typeDestroyer: new Ship ([0, 0])
 }
 
@@ -152,6 +152,7 @@ const readyEl = document.getElementById('ready');
 const winMessageEl = document.getElementById('win-message');
 const sinkMessageEl = document.getElementById('sunk-message');
 
+const shipHoverEl = document.getElementById('ship-primed-hover');
 /*----- event listeners -----*/ 
 playerBoardEl.addEventListener('click', handleSetupBoardClick);
 opponentBoardEl.addEventListener('click', handleAttackBoardClick);
@@ -159,6 +160,9 @@ document.addEventListener('contextmenu', handleRightClick);
 portEl.addEventListener('click', handleShipSelect);
 resetEl.addEventListener('click', init);
 readyEl.addEventListener('click', handleReadyButton);
+
+document.addEventListener('mousemove', changeShipHoverPos); 
+// document.addEventListener("mousemove", changeShipHoverPos); 
 
 /*----- functions -----*/
 //Create GameBoard Pieces
@@ -395,8 +399,8 @@ function handleRightClick(event) {
     if (state.phase !== 'setup') {
         return;
     }
-    event.preventDefault();
     if (state.shipPrimed) {
+        event.preventDefault();
         if (state.orientation === 'horizontal') {
             state.orientation = 'vertical';
         } else if (state.orientation === 'vertical') {
@@ -565,6 +569,13 @@ function triggerAi() {
         //         squareAvailable = true;
         //     }
         // }
+
+        //Can use the above code for a simple random Ai.
+
+        //Hard Ai is below.
+        
+
+
         handleAttack(row, col);
     }, 5000);
 }
@@ -605,7 +616,7 @@ function render () {
     } else if (state.phase === 'setup') {
         let unplacedShips = 0;
         for (let ship in playerShipState) {
-            unplacedShips += playerShipState[ship].counter
+            unplacedShips += playerShipState[ship].counter;
         }
         if (unplacedShips === 0) {
             readyEl.className = 'active';
@@ -616,9 +627,11 @@ function render () {
         if (state.shipPrimed) {
             root.style.setProperty('--ship-image', 'blue');
             root.style.setProperty('--ship-orientation', (state.orientation === 'horizontal' ? 'none' : 'rotate(90deg)'));
+            renderShipPrimed();
         } else if (!state.shipPrimed) {
             root.style.setProperty('--ship-image', 'transparent');
             root.style.setProperty('--ship-orientation', 'none');
+            renderShipPrimed();
         }
 
     }
@@ -630,11 +643,13 @@ function render () {
         let computerDeadCount = 0;
         for (let ship in playerShipState) {
             if (!playerShipState[ship].health.includes(0)) {
+                //If i want I can also have the ship image rendered here instead of the check if ships sunk function.
                 playerDeadCount += 1;
             }
         }
         for (let ship in enemyShipState) {
             if (!enemyShipState[ship].health.includes(0)) {
+                //Same here, if i want I can have the ship image rendered here instead of the check if ships sunk function.
                 computerDeadCount += 1;
             }
         }
@@ -656,3 +671,40 @@ function render () {
 
 createGameBoards();
 init();
+
+
+//Function for the mouse move event. Basically, it will make the ship hover image match the cursor.
+function changeShipHoverPos(event) {
+    if (state.phase !== 'setup') {
+        return;
+    }
+    shipHoverEl.style.left = `calc(${event.pageX}px - 2vw)`;
+    shipHoverEl.style.top = `calc(${event.pageY}px - 2vw)`;
+}
+
+//This goes along with the changeShipHoverPos event listener. Any time a ship is primed/unprimed, the appearance of the ship hover image will change to match the currently primed ship and its orientation.
+function renderShipPrimed() {
+    if (state.shipPrimed) {
+        shipHoverEl.style.display = 'inline-block';
+        shipHoverEl.src = playerShipState[state.shipPrimed].image;
+        shipHoverEl.style.height = 'var(--square-size)';
+        shipHoverEl.style.width = `calc(${playerShipState[state.shipPrimed].health.length} * var(--square-size)`;
+        // shipHoverEl.style.position = 'absolute';
+        // shipHoverEl.style.opacity = 0.5;
+        // shipHoverEl.style.pointerEvents = 'none';
+        if (state.orientation === 'vertical') {
+            shipHoverEl.style.transform = 'rotate(90deg)';
+            shipHoverEl.style.transformOrigin = 'calc(var(--square-size) * 0.5) calc(var(--square-size) * 0.5)';
+        } else {
+            shipHoverEl.style.transform = '';
+        }
+        document.addEventListener('mousemove', changeShipHoverPos); 
+    } else if (!state.shipPrimed) {
+        shipHoverEl.style.display = 'none';
+        shipHoverEl.src = '';
+        shipHoverEl.style.transform = '';
+    }
+}
+
+
+// ----------------------------------
