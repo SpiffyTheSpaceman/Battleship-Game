@@ -86,6 +86,15 @@
     background-color: red;
 }
 
+#player-grid-container > div.missed {
+    border: 3px solid greenyellow;
+}
+
+#player-grid-container > div.hit {
+    border: 3px solid blue;
+}
+
+
 #player-grid-container > div:hover {
     /* position: absolute; */
     /* top: 0; */
@@ -100,11 +109,11 @@
 }
 
 #opponent-grid-container > div.missed {
-    border: 1px solid greenyellow;
+    border: 3px solid greenyellow;
 }
 
 #opponent-grid-container > div.hit {
-    border: 1px solid red;
+    border: 3px solid blue;
 }
 
 

@@ -139,16 +139,23 @@ const enemyShipState = {
 /*----- cached element references -----*/ 
 const playerBoardEl = document.getElementById('player-grid-container');
 const opponentBoardEl = document.getElementById('opponent-grid-container');
+
 const playerCoordinateEl = [], opponentCoordinateEl = [];
+
 const portEl = document.getElementById('battleships-container');
+
 const root = document.documentElement;
+
 const resetEl = document.getElementById('reset');
-const readyEl = document.getElementById('ready')
+const readyEl = document.getElementById('ready');
+
+const winMessageEl = document.getElementById('win-message');
+const sinkMessageEl = document.getElementById('sunk-message');
 
 /*----- event listeners -----*/ 
 playerBoardEl.addEventListener('click', handleSetupBoardClick);
 opponentBoardEl.addEventListener('click', handleAttackBoardClick);
-document.getElementById('player-side').addEventListener('contextmenu', handleRightClick);
+document.addEventListener('contextmenu', handleRightClick);
 portEl.addEventListener('click', handleShipSelect);
 resetEl.addEventListener('click', init);
 readyEl.addEventListener('click', handleReadyButton);
@@ -380,10 +387,10 @@ function handleReadyButton(event) {
 
 //Function so that right click will change the orientation of the ship before being placed.
 function handleRightClick(event) {
-    event.preventDefault();
     if (state.phase !== 'setup') {
         return;
     }
+    event.preventDefault();
     if (state.shipPrimed) {
         if (state.orientation === 'horizontal') {
             state.orientation = 'vertical';
@@ -460,11 +467,11 @@ function handleAttack(row, col) {
     //Determine which board and state we are messing with based on whose turn it was.
     if (state.turn === 1) {
         squareEl = opponentCoordinateEl[row][col];
-        playerState = shipState;
+        playerState = enemyShipState;
 
     } else {
         squareEl = playerCoordinateEl[row][col];
-        playerState = enemyShipState;
+        playerState = shipState;
     }
     let shipType = findShipType(squareEl);
     let healthIndex = null;
@@ -473,8 +480,12 @@ function handleAttack(row, col) {
         squareEl.classList.add('hit');
         healthIndex = (playerState[shipType].orientation === 'horizontal') 
             ? (col - playerState[shipType].coordinate[1]) 
-            : (healthIndex = row - playerState[shipType].coordinate[0]);
+            : (row - playerState[shipType].coordinate[0]);
+        console.log(healthIndex, row, col, playerState[shipType].coordinate[0],  playerState[shipType].coordinate[1]);
         playerState[shipType].health[healthIndex] = 1;
+        // if (state.turn === -1) {
+        //     pastAiChoice.push
+        // }
         checkShipSunk(playerState, shipType);
     } else {
         squareEl.classList.add('missed');
@@ -487,8 +498,12 @@ function handleAttack(row, col) {
 function checkShipSunk(playerState, shipType) {
     if (!playerState[shipType].health.includes(0)) {
         loopEachShipSquare(playerState, shipType, (element) => {
-            
+            element.classList.add('sunk');
         })
+        let shipName = shipType.substr(4);
+        let attacker = (state.turn === 1) ? 'You' : 'Skynet has';
+        sinkMessageEl.textContent = `${attacker} sunk a ${shipName}!`
+        sinkMessageEl.style.backGroundColor = (state.turn === 1) ? '#ED1612' : '#12E9ED'
     }
 }
 
@@ -502,8 +517,9 @@ function handleAttackBoardClick(event) {
         return;
     }
     let index = [parseInt(event.target.id[3]), parseInt(event.target.id[5])];
+    console.log(index[0], index[1])
     handleAttack(index[0], index[1]);
-    // triggerAi();
+    triggerAi();
 }
 
 function triggerAi() {
@@ -511,9 +527,23 @@ function triggerAi() {
     if (state.phase !== 'playing') {
         return;
     }
-    if (pastAiChoice.length === 0) {
-
-    }
+    winMessageEl.textContent = 'Skynet is thinking';
+    setTimeout(() => {
+        let row = null;
+        let col = null;
+        let squareAvailable = false;
+    
+        //This will decide if a random place on the board to place a ship is available to be placed.
+        while (squareAvailable === false) {
+            row = Math.floor(Math.random() * 10);
+            col = Math.floor(Math.random() * 10);
+            if (!opponentCoordinateEl[row][col].classList.contains('hit')
+            && !opponentCoordinateEl[row][col].classList.contains('missed')) {
+                squareAvailable = true;
+            }
+        }
+        handleAttack(row, col);
+    }, 5000);
 }
 
 function init() {
@@ -555,21 +585,6 @@ function render () {
         }
 
     }
-    
-    //check if any ships sunk.
-    if (state.phase === 'playing') {
-        let playerDeadCount = 0;
-        let computerDeadCount = 0;
-        for (let ship in shipState) {
-            if (!shipState[ship].health.includes(0)) {
-                playerDeadCount += 1;
-            }
-        }
-        for (let ship in enemyShipState) {
-            if (!enemyShipState[ship].health.includes(0)) {
-                computerDeadCount += 1;
-            }
-        }
 
     //Render if Winner
     if (state.phase === 'playing') {
@@ -585,10 +600,10 @@ function render () {
                 computerDeadCount += 1;
             }
         }
-        if (playerDeadCount === 0) {
+        if (playerDeadCount === 5) {
             state.phase === 'Over';
             console.log('You Won!');
-        } else if (computerDeadCount === 0) {
+        } else if (computerDeadCount === 5) {
             state.phase === 'Over';
             console.log('Skynet Won!');
         }
