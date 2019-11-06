@@ -184,6 +184,7 @@ function handleShipSelect(event) {
         //primeShip takes two optional arguments: the new ship to be primed and the old ship to be unprimed. Unpriming is used only if a ship is also sent back to port.
         //If either argument is empty or null, it will do nothing in regards to the argument that is empty/null
         primeShip(null, state.shipPrimed);
+        render();
         return;
     }
 
@@ -194,12 +195,13 @@ function handleShipSelect(event) {
     if ((playerShipState[shipType].counter === 0) || shipType === state.shipPrimed) {
        
         primeShip(null, state.shipPrimed);
+        render();
         return;
     }
 
     //Assuming that a ship was clicked on that has ships in port and not the same as the currently primed ship, use the primeShip function. The primeShip function will unprime the current primed ship first; if there is no currently primed ship, it will just do nothing for it. Then, it will prime the ship that was clicked on.
     primeShip(shipType, state.shipPrimed);
- 
+    render();
     return;
 }
 
@@ -269,6 +271,7 @@ function handleSetupBoardClick(event) {
         removeShip(playerShipState, neighboringShips[0]);
         addShip(playerShipState, state.shipPrimed, index[0], index[1]);
         primeShip(neighboringShips[0]);
+        render();
     } 
 
     
@@ -301,8 +304,8 @@ function addShip(shipState, shipType, row, col) {
         //Based on the other code, the playerShipState.type.orientation should already be the same as state.orientation, but this is just a safety check.
         shipState[shipType].orientation = state.orientation;
         state.shipPrimed = null;
-        root.style.setProperty('--ship-image', 'transparent');
-        root.style.setProperty('--ship-orientation', 'none');
+        // root.style.setProperty('--ship-image', 'transparent');
+        // root.style.setProperty('--ship-orientation', 'none');
     }
     loopEachShipSquare(shipState, shipType, function(element) {
         element.classList.add(shipType, 'active');
@@ -344,8 +347,8 @@ function primeShip(newShipType, oldShipType) {
         //render the changes if the function is JUST unpriming and not priming.
         if (!newShipType) {
             state.shipPrimed = null;
-            root.style.setProperty('--ship-image', 'transparent');
-            root.style.setProperty('--ship-orientation', 'none');
+            // root.style.setProperty('--ship-image', 'transparent');
+            // root.style.setProperty('--ship-orientation', 'none');
             return;
         }
     }
@@ -357,8 +360,8 @@ function primeShip(newShipType, oldShipType) {
         //the state.orientation will have the same current orientation of the ship clicked on. If the ship is in port, it should be horizontal, if it is on the board already, it should be the orientation of how it is placed on the board.
         state.orientation = playerShipState[newShipType].orientation;
         //below is the rerendering, have to decide if it will be done in a render function or not.
-        root.style.setProperty('--ship-image', 'blue');
-        root.style.setProperty('--ship-orientation', (state.orientation === 'horizontal' ? 'none' : 'rotate(90deg)'));
+        // root.style.setProperty('--ship-image', 'blue');
+        // root.style.setProperty('--ship-orientation', (state.orientation === 'horizontal' ? 'none' : 'rotate(90deg)'));
     }
     //I could have a render function here.
     // render() 
@@ -400,6 +403,7 @@ function handleRightClick(event) {
             state.orientation = 'horizontal';
         }
         playerShipState[state.shipPrimed].orientation = state.orientation;
+        render();
     }
 }
 
@@ -464,6 +468,8 @@ function setUpEnemyBoard() {
     }
 }
 
+
+
 function handleAttack(row, col) {
     let squareEl, shipState;
     //Determine which board and state we are messing with based on whose turn it was.
@@ -480,6 +486,7 @@ function handleAttack(row, col) {
     //If there is a ship on the square, mark the square as hit and update the ship's state's health.
     if (shipType) {
         squareEl.classList.add('hit');
+        //This will determine which index in the ship's health array it needs to update.
         healthIndex = (shipState[shipType].orientation === 'horizontal') 
             ? (col - shipState[shipType].coordinate[1]) 
             : (row - shipState[shipType].coordinate[0]);
@@ -538,26 +545,26 @@ function triggerAi() {
         let squareAvailable = false;
 
         //This is to test the Ai's win conditions.
-        // row = playerShipState.typeDestroyer.coordinate[0];
-        // col = playerShipState.typeDestroyer.coordinate[1];
-        // if (playerCoordinateEl[row][col].classList.contains('hit') 
-        // || playerCoordinateEl[row][col].classList.contains('missed') ) {
-        //     if (playerShipState.typeDestroyer.orientation === 'horizontal') {
-        //         col += 1;
-        //     } else {
-        //         row += 1;
-        //     }
-        // }
-    
-        //This will decide if a random place on the board to place a ship is available to be placed.
-        while (squareAvailable === false) {
-            row = Math.floor(Math.random() * 10);
-            col = Math.floor(Math.random() * 10);
-            if (!playerCoordinateEl[row][col].classList.contains('hit')
-            && !playerCoordinateEl[row][col].classList.contains('missed')) {
-                squareAvailable = true;
+        row = playerShipState.typeDestroyer.coordinate[0];
+        col = playerShipState.typeDestroyer.coordinate[1];
+        if (playerCoordinateEl[row][col].classList.contains('hit') 
+        || playerCoordinateEl[row][col].classList.contains('missed') ) {
+            if (playerShipState.typeDestroyer.orientation === 'horizontal') {
+                col += 1;
+            } else {
+                row += 1;
             }
         }
+    
+        //This will decide if a random place on the board to place a ship is available to be placed.
+        // while (squareAvailable === false) {
+        //     row = Math.floor(Math.random() * 10);
+        //     col = Math.floor(Math.random() * 10);
+        //     if (!playerCoordinateEl[row][col].classList.contains('hit')
+        //     && !playerCoordinateEl[row][col].classList.contains('missed')) {
+        //         squareAvailable = true;
+        //     }
+        // }
         handleAttack(row, col);
     }, 5000);
 }
@@ -590,6 +597,8 @@ function init() {
 }
 
 function render () {
+
+
     //Render ready button.
     if (state.phase !== 'setup') {
         readyEl.className = '';
@@ -602,6 +611,14 @@ function render () {
             readyEl.className = 'active';
         } else {
             readyEl.className = '';
+        }
+        //Render the Primed ship.
+        if (state.shipPrimed) {
+            root.style.setProperty('--ship-image', 'blue');
+            root.style.setProperty('--ship-orientation', (state.orientation === 'horizontal' ? 'none' : 'rotate(90deg)'));
+        } else if (!state.shipPrimed) {
+            root.style.setProperty('--ship-image', 'transparent');
+            root.style.setProperty('--ship-orientation', 'none');
         }
 
     }
