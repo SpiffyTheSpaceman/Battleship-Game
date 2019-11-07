@@ -8,9 +8,8 @@
     --square-size: 4vw;
     --grid-size: repeat(10, 4vw);
     --axis-grid-size: repeat(11, 4vw);
-    --ship-image: transparent;
+    --setup-hover-color: transparent;
     --ship-length: 0;
-    --ship-orientation: rotate(90deg);
 }
 
 
@@ -33,8 +32,8 @@
 }
 
 .x-axis {
-    grid-column: 2 / span 10;
-    grid-row: 1 / span 1; 
+    grid-column: 2 / 12;
+    grid-row: 1 / 2; 
     display: flex;
     justify-content: space-around;
     align-items: flex-end;
@@ -48,8 +47,8 @@
 
 
 .y-axis {
-    grid-row: 2 / span 10;
-    grid-column: 1 / span 1;
+    grid-row: 2 / 12;
+    grid-column: 1 / 2;
     display: flex;
     flex-direction: column-reverse;
     justify-content: space-around;
@@ -62,8 +61,8 @@
 }
 
 .grid-container {
-    grid-row: 2 / span 10;
-    grid-column: 2 / span 10;
+    grid-row: 2 / 12;
+    grid-column: 2 / 12;
     display: grid;
     grid-template-columns: var(--grid-size);
     grid-template-rows: var(--grid-size);
@@ -100,7 +99,7 @@
     /* top: 0; */
     /* left: 0; */
     /* z-index: 15; */
-    background: var(--ship-image);
+    background: var(--setup-hover-color);
     /* transform: var(--ship-orientation); */
 }
 
@@ -134,7 +133,7 @@
 }
 
 #battleships-container > div {
-    width: 
+    
 }
 
 #battleships-container img {
@@ -193,4 +192,5 @@
     position: absolute;
     opacity: 0.5;
     pointer-events: none;
+    height: var(--square-size);
 }

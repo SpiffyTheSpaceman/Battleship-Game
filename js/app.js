@@ -102,7 +102,7 @@ stuff I will figure out.
 const state = {
     phase: 'setup',
     shipPrimed: null,
-    orientation: 'horizontal',
+    orientation: null,
     turn: 1
 }
 
@@ -115,7 +115,12 @@ class Ship {
         this.orientation = 'horizontal';
         this.coordinate = [null, null];
         this.counter = 1;
-        this.image = image;
+        this.attachedImage = document.createElement('img');
+        this.attachedImage.src = image;
+        this.attachedImage.style.pointerEvents = 'none';
+        this.attachedImage.style.width = `calc(${this.health.length} * var(--square-size)`;
+        this.attachedImage.style.height = 'var(--square-size)';
+        this.attachedImage.style.transformOrigin = 'calc(var(--square-size) * 0.5) calc(var(--square-size) * 0.5)';
     }
 }
 
@@ -137,6 +142,9 @@ const enemyShipState = {
 
 
 /*----- cached element references -----*/ 
+const playerBoardContainerEl = document.getElementById('player-side');
+const opponentBoardContainerEl = document.getElementById('opponent-side');
+
 const playerBoardEl = document.getElementById('player-grid-container');
 const opponentBoardEl = document.getElementById('opponent-grid-container');
 
@@ -284,8 +292,7 @@ function handleSetupBoardClick(event) {
 
 //This will be a function that will be like the forEach method except it will loop through every element that a ship that has already been placed occupies and runs a given callback function. It accepts the playerShipState object and shiptype name as a parameter and a callback function. The row and col values by default will be based on the ship's starting coordinate on the board, however, it can be specified such as if we are checking the rows and col for a ship not yet placed but rather, pending placement.
 function loopEachShipSquare(shipState, shipType, callback, row = shipState[shipType].coordinate[0], col = shipState[shipType].coordinate[1]) {
-    // let row = playerShipState[shipType].coordinate[0];
-    // let col = playerShipState[shipType].coordinate[1];
+
     let boardEl = (shipState === playerShipState ? playerCoordinateEl : opponentCoordinateEl);
     let shipLength = shipState[shipType].health.length;
     if (shipState[shipType].orientation === 'horizontal') {
@@ -303,18 +310,36 @@ function loopEachShipSquare(shipState, shipType, callback, row = shipState[shipT
 function addShip(shipState, shipType, row, col) {
     shipState[shipType].counter = 0;
     shipState[shipType].coordinate = [row, col];
+
     //These changes in stylings and state only apply during the setup phase.
     if (state.phase === 'setup') {
         //Based on the other code, the playerShipState.type.orientation should already be the same as state.orientation, but this is just a safety check.
         shipState[shipType].orientation = state.orientation;
         state.shipPrimed = null;
-        // root.style.setProperty('--ship-image', 'transparent');
-        // root.style.setProperty('--ship-orientation', 'none');
+        state.orientation = null;
+
+        //
+        //During the set up stage, we want the image of the ship to show up when we place it on the square.
+        //This will, based on the coordinate of the ship's coordinate, place an image of the ship spanning the length in the grid that the ship would take up.
+        if (shipState[shipType].orientation === 'horizontal') {
+            shipState[shipType].attachedImage.style.gridColumn = `${col + 2} / ${col + 2 + shipState[shipType].health.length}`;
+            shipState[shipType].attachedImage.style.gridRow = `${row + 2} / ${row + 3}`;
+            shipState[shipType].attachedImage.style.transform = '';
+        } else if (shipState[shipType].orientation === 'vertical') {
+            shipState[shipType].attachedImage.style.gridRow = `${row + 2} / ${row + 2 + shipState[shipType].health.length}`;
+            shipState[shipType].attachedImage.style.gridColumn = `${col + 2} / ${col + 3}`
+            shipState[shipType].attachedImage.style.transform = 'rotate(90deg)';
+        }
+        playerBoardContainerEl.appendChild(shipState[shipType].attachedImage);
+
     }
     loopEachShipSquare(shipState, shipType, function(element) {
         element.classList.add(shipType, 'active');
     })
 }
+
+// element.parentNode.removeChild(element);
+
 
 //This function will remove a ship from the board for the given playerShipState object stored in shipState
 function removeShip(shipState, shipType) {
@@ -323,6 +348,7 @@ function removeShip(shipState, shipType) {
     });
     shipState[shipType].counter = 1;
     shipState[shipType].coordinate = [null, null];
+    shipState[shipType].attachedImage.parentNode.removeChild(shipState[shipType].attachedImage);
 }
 
 
@@ -351,8 +377,6 @@ function primeShip(newShipType, oldShipType) {
         //render the changes if the function is JUST unpriming and not priming.
         if (!newShipType) {
             state.shipPrimed = null;
-            // root.style.setProperty('--ship-image', 'transparent');
-            // root.style.setProperty('--ship-orientation', 'none');
             return;
         }
     }
@@ -363,12 +387,9 @@ function primeShip(newShipType, oldShipType) {
         state.shipPrimed = newShipType;
         //the state.orientation will have the same current orientation of the ship clicked on. If the ship is in port, it should be horizontal, if it is on the board already, it should be the orientation of how it is placed on the board.
         state.orientation = playerShipState[newShipType].orientation;
-        //below is the rerendering, have to decide if it will be done in a render function or not.
-        // root.style.setProperty('--ship-image', 'blue');
-        // root.style.setProperty('--ship-orientation', (state.orientation === 'horizontal' ? 'none' : 'rotate(90deg)'));
+
     }
-    //I could have a render function here.
-    // render() 
+
 }
 
 //The Ready button: It will only be active if all the ships have been placed. It will be rendered differently if it is clickable or not.
@@ -605,6 +626,8 @@ function init() {
     winMessageEl.style.backgroundColor = 'transparent';
     sinkMessageEl.textContent = `Left Click to Select and Place the Ships, Right Click to Rotate the Ship`;
     sinkMessageEl.style.backgroundColor = 'transparent';
+    shipHoverEl.style.display = 'none';
+    shipHoverEl.src = '';
 }
 
 function render () {
@@ -624,27 +647,21 @@ function render () {
             readyEl.className = '';
         }
         //Render the Primed ship.
-        if (state.shipPrimed) {
-            root.style.setProperty('--ship-image', 'blue');
-            root.style.setProperty('--ship-orientation', (state.orientation === 'horizontal' ? 'none' : 'rotate(90deg)'));
-            renderShipPrimed();
-        } else if (!state.shipPrimed) {
-            root.style.setProperty('--ship-image', 'transparent');
-            root.style.setProperty('--ship-orientation', 'none');
-            renderShipPrimed();
-        }
+        renderShipPrimed();
 
     }
 
 
-    //Render if Winner
+
     if (state.phase === 'playing') {
+        //Counters to see how many ships currently sunk.
         let playerDeadCount = 0;
         let computerDeadCount = 0;
         for (let ship in playerShipState) {
             if (!playerShipState[ship].health.includes(0)) {
                 //If i want I can also have the ship image rendered here instead of the check if ships sunk function.
                 playerDeadCount += 1;
+
             }
         }
         for (let ship in enemyShipState) {
@@ -652,7 +669,7 @@ function render () {
                 //Same here, if i want I can have the ship image rendered here instead of the check if ships sunk function.
                 computerDeadCount += 1;
             }
-        }
+        }//Render if Winner
         if (playerDeadCount === 5) {
             state.phase === 'Over';
             console.log('You Won!');
@@ -669,10 +686,6 @@ function render () {
     
 }
 
-createGameBoards();
-init();
-
-
 //Function for the mouse move event. Basically, it will make the ship hover image match the cursor.
 function changeShipHoverPos(event) {
     if (state.phase !== 'setup') {
@@ -686,12 +699,9 @@ function changeShipHoverPos(event) {
 function renderShipPrimed() {
     if (state.shipPrimed) {
         shipHoverEl.style.display = 'inline-block';
-        shipHoverEl.src = playerShipState[state.shipPrimed].image;
-        shipHoverEl.style.height = 'var(--square-size)';
+        shipHoverEl.src = playerShipState[state.shipPrimed].attachedImage.src;
         shipHoverEl.style.width = `calc(${playerShipState[state.shipPrimed].health.length} * var(--square-size)`;
-        // shipHoverEl.style.position = 'absolute';
-        // shipHoverEl.style.opacity = 0.5;
-        // shipHoverEl.style.pointerEvents = 'none';
+        root.style.setProperty('--setup-hover-color', 'blue');
         if (state.orientation === 'vertical') {
             shipHoverEl.style.transform = 'rotate(90deg)';
             shipHoverEl.style.transformOrigin = 'calc(var(--square-size) * 0.5) calc(var(--square-size) * 0.5)';
@@ -702,9 +712,10 @@ function renderShipPrimed() {
     } else if (!state.shipPrimed) {
         shipHoverEl.style.display = 'none';
         shipHoverEl.src = '';
-        shipHoverEl.style.transform = '';
+        root.style.setProperty('--setup-hover-color', 'transparent');
     }
 }
 
+createGameBoards();
+init();
 
-// ----------------------------------
