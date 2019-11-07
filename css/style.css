@@ -194,4 +194,5 @@
     text-align: center;
     object-fit: contain;
     height: var(--square-size);
+    border-radius: 10%;
 }
