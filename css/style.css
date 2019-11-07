@@ -22,7 +22,6 @@
     display: flex;
     flex-direction: row-reverse;
     justify-content: space-around;
-
 }
 
 #flex-grid-game-container > div {
@@ -85,6 +84,11 @@
     background-color: red;
 }
 
+#player-grid-container > div {
+    transition: transform 0.3s ease;
+    transform: scale(1.0);
+}
+
 #player-grid-container > div.missed {
     border: 3px solid greenyellow;
 }
@@ -93,15 +97,10 @@
     border: 3px solid blue;
 }
 
-
+/* 
 #player-grid-container > div:hover {
-    /* position: absolute; */
-    /* top: 0; */
-    /* left: 0; */
-    /* z-index: 15; */
     background: var(--setup-hover-color);
-    /* transform: var(--ship-orientation); */
-}
+} */
 
 #opponent-grid-container > .active {
     background-color: orange;
@@ -138,7 +137,7 @@
 
 #battleships-container img {
     height: var(--square-size);
-    background-color: red;
+    object-fit: contain;
 }
 
 #battleships-container img.typeCarrier {
@@ -192,5 +191,7 @@
     position: absolute;
     opacity: 0.5;
     pointer-events: none;
+    text-align: center;
+    object-fit: contain;
     height: var(--square-size);
 }

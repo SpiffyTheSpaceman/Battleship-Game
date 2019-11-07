@@ -117,17 +117,18 @@ class Ship {
         this.counter = 1;
         this.attachedImage = document.createElement('img');
         this.attachedImage.src = image;
+        //pointerEvents will make it so that I can still click on the square the image of the ship is placed on instead of covering it.
         this.attachedImage.style.pointerEvents = 'none';
         this.attachedImage.style.width = `calc(${this.health.length} * var(--square-size)`;
-        this.attachedImage.style.height = 'var(--square-size)';
-        this.attachedImage.style.transformOrigin = 'calc(var(--square-size) * 0.5) calc(var(--square-size) * 0.5)';
+        this.attachedImage.style.placeSelf = 'center';
+        this.attachedImage.style.zIndex = 15;
     }
 }
 
 const playerShipState = {
     typeCarrier: new Ship ([0, 0, 0, 0, 0]),
     typeBattleship: new Ship ([0, 0, 0, 0]),
-    typeCruiser: new Ship ([0, 0, 0]),
+    typeCruiser: new Ship ([0, 0, 0], '/src/assets/Cruiser.png'),
     typeSubmarine: new Ship ([0, 0, 0], '/src/assets/Submarine.png'),
     typeDestroyer: new Ship ([0, 0])
 }
@@ -170,7 +171,9 @@ resetEl.addEventListener('click', init);
 readyEl.addEventListener('click', handleReadyButton);
 
 document.addEventListener('mousemove', changeShipHoverPos); 
-// document.addEventListener("mousemove", changeShipHoverPos); 
+
+playerBoardEl.addEventListener('mouseover', handlePlayerBoardMouseOver);
+playerBoardEl.addEventListener('mouseout', handlePlayerBoardMouseOut);
 
 /*----- functions -----*/
 //Create GameBoard Pieces
@@ -422,14 +425,25 @@ function handleRightClick(event) {
     }
     if (state.shipPrimed) {
         event.preventDefault();
+        //This is so if there is a mouse over styling done on the board at the moment, it will be rendered out first, the state will be changed, and then re rendered at the end.
+        if (event.target.parentNode.id === 'player-grid-container') {
+            handlePlayerBoardMouseOut(event);
+        }
+
         if (state.orientation === 'horizontal') {
             state.orientation = 'vertical';
         } else if (state.orientation === 'vertical') {
             state.orientation = 'horizontal';
         }
         playerShipState[state.shipPrimed].orientation = state.orientation;
+        
+        //Rerender the mouse over function to rerender since the position has now changed.
+        if (event.target.parentNode.id === 'player-grid-container') {
+            handlePlayerBoardMouseOver(event);
+        }
         render();
     }
+
 }
 
 //Function that just creates the grid game boards.
@@ -515,7 +529,7 @@ function handleAttack(row, col) {
         healthIndex = (shipState[shipType].orientation === 'horizontal') 
             ? (col - shipState[shipType].coordinate[1]) 
             : (row - shipState[shipType].coordinate[0]);
-        console.log(healthIndex, row, col, shipState[shipType].coordinate[0],  shipState[shipType].coordinate[1]);
+
         shipState[shipType].health[healthIndex] = 1;
         // if (state.turn === -1) {
         //     pastAiChoice.push
@@ -553,7 +567,7 @@ function handleAttackBoardClick(event) {
         return;
     }
     let index = [parseInt(event.target.id[3]), parseInt(event.target.id[5])];
-    console.log(index[0], index[1])
+
     handleAttack(index[0], index[1]);
     triggerAi();
 }
@@ -570,26 +584,26 @@ function triggerAi() {
         let squareAvailable = false;
 
         //This is to test the Ai's win conditions.
-        row = playerShipState.typeDestroyer.coordinate[0];
-        col = playerShipState.typeDestroyer.coordinate[1];
-        if (playerCoordinateEl[row][col].classList.contains('hit') 
-        || playerCoordinateEl[row][col].classList.contains('missed') ) {
-            if (playerShipState.typeDestroyer.orientation === 'horizontal') {
-                col += 1;
-            } else {
-                row += 1;
-            }
-        }
-    
-        //This will decide if a random place on the board to place a ship is available to be placed.
-        // while (squareAvailable === false) {
-        //     row = Math.floor(Math.random() * 10);
-        //     col = Math.floor(Math.random() * 10);
-        //     if (!playerCoordinateEl[row][col].classList.contains('hit')
-        //     && !playerCoordinateEl[row][col].classList.contains('missed')) {
-        //         squareAvailable = true;
+        // row = playerShipState.typeDestroyer.coordinate[0];
+        // col = playerShipState.typeDestroyer.coordinate[1];
+        // if (playerCoordinateEl[row][col].classList.contains('hit') 
+        // || playerCoordinateEl[row][col].classList.contains('missed') ) {
+        //     if (playerShipState.typeDestroyer.orientation === 'horizontal') {
+        //         col += 1;
+        //     } else {
+        //         row += 1;
         //     }
         // }
+    
+        //This will decide if a random place on the board to place a ship is available to be placed.
+        while (squareAvailable === false) {
+            row = Math.floor(Math.random() * 10);
+            col = Math.floor(Math.random() * 10);
+            if (!playerCoordinateEl[row][col].classList.contains('hit')
+            && !playerCoordinateEl[row][col].classList.contains('missed')) {
+                squareAvailable = true;
+            }
+        }
 
         //Can use the above code for a simple random Ai.
 
@@ -686,7 +700,7 @@ function render () {
     
 }
 
-//Function for the mouse move event. Basically, it will make the ship hover image match the cursor.
+//Function for the mouse move event. Basically, it will make the ship hover image position match the cursor position.
 function changeShipHoverPos(event) {
     if (state.phase !== 'setup') {
         return;
@@ -698,21 +712,100 @@ function changeShipHoverPos(event) {
 //This goes along with the changeShipHoverPos event listener. Any time a ship is primed/unprimed, the appearance of the ship hover image will change to match the currently primed ship and its orientation.
 function renderShipPrimed() {
     if (state.shipPrimed) {
+        //Basically, the display on init is none so make it visible, load the image, and adjust the size to the ship.
         shipHoverEl.style.display = 'inline-block';
         shipHoverEl.src = playerShipState[state.shipPrimed].attachedImage.src;
         shipHoverEl.style.width = `calc(${playerShipState[state.shipPrimed].health.length} * var(--square-size)`;
         root.style.setProperty('--setup-hover-color', 'blue');
+        //Based on the orientation, determine the orientation of the image via rotate and adjust the transform origin so that it's not the top left corner that the cursor is on.
         if (state.orientation === 'vertical') {
             shipHoverEl.style.transform = 'rotate(90deg)';
             shipHoverEl.style.transformOrigin = 'calc(var(--square-size) * 0.5) calc(var(--square-size) * 0.5)';
         } else {
             shipHoverEl.style.transform = '';
-        }
-        document.addEventListener('mousemove', changeShipHoverPos); 
+        } 
+    //if the ship isn't primed, make it disappear.
     } else if (!state.shipPrimed) {
         shipHoverEl.style.display = 'none';
         shipHoverEl.src = '';
         root.style.setProperty('--setup-hover-color', 'transparent');
+    }
+}
+
+function handlePlayerBoardMouseOver(event) {
+    if (state.phase !== 'setup' || event.target.tagName !== 'DIV') {
+        return;
+    }
+    let index = [parseInt(event.target.id[3]), parseInt(event.target.id[5])];
+
+    //Basically, if there is a ship primed:
+    if (state.shipPrimed) {
+        //If the ship primed goes over the edge, make the ship hover image have a background color of red to indicate a problem.
+        if (((state.orientation === 'horizontal') && (index[1] + playerShipState[state.shipPrimed].health.length - 1) > 9) ||
+        ((state.orientation === 'vertical') && (index[0] + playerShipState[state.shipPrimed].health.length - 1) > 9)) {
+            shipHoverEl.style.backgroundColor = 'red';
+            shipHoverEl.style.borderRadius = '10%';
+            return;
+        } else {
+            //Else, animate the squares it would take.
+            loopEachShipSquare(playerShipState, state.shipPrimed, function(element) {
+                element.style.transform = 'scale(1.1)';
+            }, index[0], index[1]);
+            return;
+        }
+    //If ship is not primed:
+    } else if (!state.shipPrimed) {
+        let shipType = findShipType(event.target);
+        //If a ship exists on the hovered square, animate the squares that the ship takes.
+        if (shipType) {
+            loopEachShipSquare(playerShipState, shipType, function(element) {
+                element.style.transform = 'scale(1.1)';
+            });
+            return;
+        //Otherwise, just animate the single square.
+        } else {
+            event.target.style.transform = 'scale(1.1)';
+            return;
+        }
+    }
+}
+
+//This Mouse out event is just to set the stylings back to default.
+function handlePlayerBoardMouseOut(event) {
+    if (state.phase !== 'setup' || event.target.tagName !== 'DIV') {
+        return;
+    }
+    let index = [parseInt(event.target.id[3]), parseInt(event.target.id[5])];
+
+    //Basically, if there is a ship primed:
+    if (state.shipPrimed) {
+        //If the ship primed goes over the edge, make the ship hover image have a background color of red to indicate a problem.
+        if (((state.orientation === 'horizontal') && (index[1] + playerShipState[state.shipPrimed].health.length - 1) > 9) ||
+        ((state.orientation === 'vertical') && (index[0] + playerShipState[state.shipPrimed].health.length - 1) > 9)) {
+            shipHoverEl.style.backgroundColor = 'transparent';
+            shipHoverEl.style.borderRadius = '';
+            return;
+        } else {
+            //Else, animate the squares it would take.
+            loopEachShipSquare(playerShipState, state.shipPrimed, function(element) {
+                element.style.transform = 'scale(1.0)';
+            }, index[0], index[1]);
+            return;
+        }
+    //If ship is not primed:
+    } else if (!state.shipPrimed) {
+        let shipType = findShipType(event.target);
+        //If a ship exists on the hovered square, animate the squares that the ship takes.
+        if (shipType) {
+            loopEachShipSquare(playerShipState, shipType, function(element) {
+                element.style.transform = 'scale(1.0)';
+            });
+            return;
+        //Otherwise, just animate the single square.
+        } else {
+            event.target.style.transform = 'scale(1.0)';
+            return;
+        }
     }
 }
 
