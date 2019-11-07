@@ -8,9 +8,8 @@
     --square-size: 4vw;
     --grid-size: repeat(10, 4vw);
     --axis-grid-size: repeat(11, 4vw);
-    --ship-image: transparent;
+    --setup-hover-color: transparent;
     --ship-length: 0;
-    --ship-orientation: rotate(90deg);
 }
 
 
@@ -23,7 +22,6 @@
     display: flex;
     flex-direction: row-reverse;
     justify-content: space-around;
-
 }
 
 #flex-grid-game-container > div {
@@ -33,8 +31,8 @@
 }
 
 .x-axis {
-    grid-column: 2 / span 10;
-    grid-row: 1 / span 1; 
+    grid-column: 2 / 12;
+    grid-row: 1 / 2; 
     display: flex;
     justify-content: space-around;
     align-items: flex-end;
@@ -48,8 +46,8 @@
 
 
 .y-axis {
-    grid-row: 2 / span 10;
-    grid-column: 1 / span 1;
+    grid-row: 2 / 12;
+    grid-column: 1 / 2;
     display: flex;
     flex-direction: column-reverse;
     justify-content: space-around;
@@ -62,8 +60,8 @@
 }
 
 .grid-container {
-    grid-row: 2 / span 10;
-    grid-column: 2 / span 10;
+    grid-row: 2 / 12;
+    grid-column: 2 / 12;
     display: grid;
     grid-template-columns: var(--grid-size);
     grid-template-rows: var(--grid-size);
@@ -86,6 +84,11 @@
     background-color: red;
 }
 
+#player-grid-container > div {
+    transition: transform 0.3s ease;
+    transform: scale(1.0);
+}
+
 #player-grid-container > div.missed {
     border: 3px solid greenyellow;
 }
@@ -94,18 +97,17 @@
     border: 3px solid blue;
 }
 
-
+/* 
 #player-grid-container > div:hover {
-    /* position: absolute; */
-    /* top: 0; */
-    /* left: 0; */
-    /* z-index: 15; */
-    background: var(--ship-image);
-    /* transform: var(--ship-orientation); */
-}
+    background: var(--setup-hover-color);
+} */
 
 #opponent-grid-container > .active {
     background-color: orange;
+}
+
+#opponent-grid-container > .active.sunk {
+    background-color: red;
 }
 
 #opponent-grid-container > div.missed {
@@ -129,13 +131,36 @@
     height: 500px;
 }
 
-#battleships-container > img {
-    width: 50px;
-    height: 50px;
-    background-color: red;
+#battleships-container > div {
+    
 }
 
-#battleships-container > img:hover {
+#battleships-container img {
+    height: var(--square-size);
+    object-fit: contain;
+}
+
+#battleships-container img.typeCarrier {
+    width: calc(5* var(--square-size));
+}
+
+#battleships-container img.typeBattleship {
+    width: calc(4* var(--square-size));
+}
+
+#battleships-container img.typeCruiser {
+    width: calc(3* var(--square-size));
+}
+
+#battleships-container img.typeSubmarine {
+    width: calc(3* var(--square-size));
+}
+
+#battleships-container img.typeDestroyer {
+    width: calc(2* var(--square-size));
+}
+
+#battleships-container img:hover {
     cursor: pointer;
 }
 
@@ -157,4 +182,16 @@
 #ready.active {
     cursor: pointer;
     opacity: 1;
+}
+
+
+
+#ship-primed-hover {
+    display: none;
+    position: absolute;
+    opacity: 0.5;
+    pointer-events: none;
+    text-align: center;
+    object-fit: contain;
+    height: var(--square-size);
 }
