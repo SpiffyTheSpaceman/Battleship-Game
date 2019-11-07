@@ -748,7 +748,6 @@ function handlePlayerBoardMouseOver(event) {
         if (((state.orientation === 'horizontal') && (index[1] + playerShipState[state.shipPrimed].health.length - 1) > 9) ||
         ((state.orientation === 'vertical') && (index[0] + playerShipState[state.shipPrimed].health.length - 1) > 9)) {
             shipHoverEl.style.backgroundColor = 'red';
-            shipHoverEl.style.borderRadius = '10%';
             return;
         } else {
             //if the squares do not go over the edge:
@@ -767,7 +766,6 @@ function handlePlayerBoardMouseOver(event) {
             //If the primed ship overlaps more than 1 ship, also make the ship image hover red.
             if (neighboringShips.length > 1) {
                 shipHoverEl.style.backgroundColor = 'red';
-                shipHoverEl.style.borderRadius = '10%';
                 return;
             } else {
                 //Else, the ship is good to go. Animate the squares it would take.
@@ -803,45 +801,25 @@ function handlePlayerBoardMouseOut(event) {
 
     //Basically, if there is a ship primed:
     if (state.shipPrimed) {
-
-
-        //If the ship primed goes over the edge, make the ship hover image have a background color of red to indicate a problem.
+        
+        //Get rid of the background color, if any, over the shipHoverEl.
+        shipHoverEl.style.backgroundColor = 'transparent';
+        //If the ship primed goes over the edge, do nothing. We already removed the background color.
         if (((state.orientation === 'horizontal') && (index[1] + playerShipState[state.shipPrimed].health.length - 1) > 9) ||
         ((state.orientation === 'vertical') && (index[0] + playerShipState[state.shipPrimed].health.length - 1) > 9)) {
-            shipHoverEl.style.backgroundColor = 'transparent';
-            shipHoverEl.style.borderRadius = '';
             return;
         } else {
-            //if the squares do not go over the edge:
-            let neighboringShips = [];
-            //This will loop through each neighboring element and push each unique ship type that exists in the neighboring elements into the neighboringShips Array.
-            loopEachShipSquare(playerShipState, state.shipPrimed, (element) => {
-                let shipType = findShipType(element);
-                if (shipType) {
-                    if (neighboringShips.length === 0) {
-                        neighboringShips.push(shipType)
-                    } else if (neighboringShips.length > 0 && !neighboringShips.includes(shipType)) {
-                        neighboringShips.push(shipType);
-                    }
-                };
+            //Else, remove the styling from the neighboring squares.
+            loopEachShipSquare(playerShipState, state.shipPrimed, function(element) {
+                element.style.transform = 'scale(1.0)';
             }, index[0], index[1]);
-            //If the primed ship overlaps more than 1 ship, also make the ship image hover red.
-            if (neighboringShips.length > 1) {
-                shipHoverEl.style.backgroundColor = 'transparent';
-                shipHoverEl.style.borderRadius = '';
-                return;
-            } else {
-                //Else, the ship is good to go. Animate the squares it would take.
-                loopEachShipSquare(playerShipState, state.shipPrimed, function(element) {
-                    element.style.transform = 'scale(1.0)';
-                }, index[0], index[1]);
-                return;
-            }
+            return;
+            
         }
     //If ship is not primed:
     } else if (!state.shipPrimed) {
         let shipType = findShipType(event.target);
-        //If a ship exists on the hovered square, animate the squares that the ship takes.
+        //If a ship exists on the hovered square, remove the hover animation on the ship's squares.
         if (shipType) {
             loopEachShipSquare(playerShipState, shipType, function(element) {
                 element.style.transform = 'scale(1.0)';
