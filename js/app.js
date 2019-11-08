@@ -1,10 +1,17 @@
-/*----- constants -----*/
+/* ************************************************************************
+********************************* Constants ***************************** */
 const colors = {
     shipPrimeHover: '#E718A4',
     error: 'red'
 }
 
-/*----- app's state (variables) -----*/ 
+
+
+
+
+
+/* ************************************************************************
+********************* State Variables *********************************** */
 const state = {
     phase: 'setup',
     shipPrimed: null,
@@ -50,7 +57,17 @@ const enemyShipState = {
 }
 
 
-/*----- cached element references -----*/ 
+
+
+
+
+
+
+
+
+
+/* ************************************************************************
+********************* Cached Element References ****************************** */
 const playerBoardContainerEl = document.getElementById('player-side');
 const opponentBoardContainerEl = document.getElementById('opponent-side');
 
@@ -83,7 +100,19 @@ document.addEventListener('mousemove', changeShipHoverPos);
 playerBoardEl.addEventListener('mouseover', handlePlayerBoardMouseOver);
 playerBoardEl.addEventListener('mouseout', handlePlayerBoardMouseOut);
 
-/*----- functions -----*/
+
+
+
+
+
+
+
+
+
+
+
+/* ************************************************************************
+********************* Event Listener Functions **************************** */
 
 //Function to handle selecting ships from the portEl.
 function handleShipSelect(event) {
@@ -674,6 +703,7 @@ function createGameBoards() {
     }
 }
 
+//Function to initialize/reset the game.
 function init() {
     //If we pressed the rest button mid Ai thinking, stop it.
     clearTimeout(aiDelay);
@@ -713,6 +743,7 @@ function init() {
     render();
 }
 
+//Function to render based on certain state changes.
 function render () {
 
     //Render ready button.
@@ -737,8 +768,6 @@ function render () {
         renderShipPrimed();
 
     }
-
-
 
     if (state.phase === 'playing') {
         //Counters to see how many ships currently sunk.
