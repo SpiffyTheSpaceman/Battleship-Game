@@ -23,7 +23,7 @@ The classic board game brought to the web! Play against a simple Ai and see if y
 4.  Add aesthetic changes.
 
 ## PREVIEW
-![] (BattleshipPreview.gif)
+![](BattleshipPreview.gif)
 
 ### Powered by HTML, CSS, Javascript
 ![](https://www.logolynx.com/images/logolynx/4d/4d31e3c24f9bbbaa9ff60650391b0dc2.png)
