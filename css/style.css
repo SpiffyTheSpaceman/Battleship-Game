@@ -133,6 +133,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    border: 8px solid grey;
 }
 
 #battleships-container:before {
