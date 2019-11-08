@@ -163,7 +163,7 @@ body {
     transform: scale(1.1);
 }
 
-#battleships-container img.active {
+#battleships-container img.unavailable {
     opacity: 0.5;
 }
 
