@@ -34,19 +34,19 @@ class Ship {
 }
 
 const playerShipState = {
-    typeCarrier: new Ship ([0, 0, 0, 0, 0], '../src/assets/Carrier.gif'),
-    typeBattleship: new Ship ([0, 0, 0, 0], '../src/assets/Battleship.gif'),
-    typeCruiser: new Ship ([0, 0, 0], '../src/assets/Cruiser.png'),
-    typeSubmarine: new Ship ([0, 0, 0], '../src/assets/Submarine.png'),
-    typeDestroyer: new Ship ([0, 0], '../src/assets/Destroyer.png')
+    typeCarrier: new Ship ([0, 0, 0, 0, 0], './src/assets/Carrier.gif'),
+    typeBattleship: new Ship ([0, 0, 0, 0], './src/assets/Battleship.gif'),
+    typeCruiser: new Ship ([0, 0, 0], './src/assets/Cruiser.png'),
+    typeSubmarine: new Ship ([0, 0, 0], './src/assets/Submarine.png'),
+    typeDestroyer: new Ship ([0, 0], './src/assets/Destroyer.png')
 }
 
 const enemyShipState = {
-    typeCarrier: new Ship ([0, 0, 0, 0, 0], '../src/assets/Carrier.gif'),
-    typeBattleship: new Ship ([0, 0, 0, 0], '../src/assets/Battleship.gif'),
-    typeCruiser: new Ship ([0, 0, 0], '../src/assets/Cruiser.png'),
-    typeSubmarine: new Ship ([0, 0, 0], '../src/assets/Submarine.png'),
-    typeDestroyer: new Ship ([0, 0], '../src/assets/Destroyer.png')
+    typeCarrier: new Ship ([0, 0, 0, 0, 0], './src/assets/Carrier.gif'),
+    typeBattleship: new Ship ([0, 0, 0, 0], './src/assets/Battleship.gif'),
+    typeCruiser: new Ship ([0, 0, 0], './src/assets/Cruiser.png'),
+    typeSubmarine: new Ship ([0, 0, 0], './src/assets/Submarine.png'),
+    typeDestroyer: new Ship ([0, 0], './src/assets/Destroyer.png')
 }
 
 
