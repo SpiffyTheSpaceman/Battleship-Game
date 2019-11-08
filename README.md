@@ -1,5 +1,7 @@
 # The Battleship Game
 The classic board game brought to the web! Play against a simple Ai and see if you can win!
+Play below!
+https://spiffythespaceman.github.io/Battleship-Game/
 ## Basic Rules and Gameplay
 ### Setup Phase
 - The game starts off in set up. Your ships start off in "port". To select a ship and place it on the board, simply click one of the ships and click a square on the board on the right.
