@@ -98,6 +98,11 @@ stuff I will figure out.
 
 
 /*----- constants -----*/
+const colors = {
+    shipPrimeHover: '#E718A4',
+    error: 'red'
+}
+
 /*----- app's state (variables) -----*/ 
 const state = {
     phase: 'setup',
@@ -107,7 +112,7 @@ const state = {
 }
 
 const pastAiChoice = [];
-
+let aiDelay;
 //the ship coordinate represents the coordinate the front of the ship is at on the game board.
 class Ship {
     constructor(health, image) {
@@ -120,25 +125,27 @@ class Ship {
         //pointerEvents will make it so that I can still click on the square the image of the ship is placed on instead of covering it.
         this.attachedImage.style.pointerEvents = 'none';
         this.attachedImage.style.width = `calc(${this.health.length} * var(--square-size)`;
+        this.attachedImage.style.height = 'var(--square-size)'
+        this.attachedImage.style.objectFit = 'contain';
         this.attachedImage.style.placeSelf = 'center';
         this.attachedImage.style.zIndex = 15;
     }
 }
 
 const playerShipState = {
-    typeCarrier: new Ship ([0, 0, 0, 0, 0]),
-    typeBattleship: new Ship ([0, 0, 0, 0]),
+    typeCarrier: new Ship ([0, 0, 0, 0, 0], '/src/assets/Carrier.gif'),
+    typeBattleship: new Ship ([0, 0, 0, 0], '/src/assets/Battleship.gif'),
     typeCruiser: new Ship ([0, 0, 0], '/src/assets/Cruiser.png'),
     typeSubmarine: new Ship ([0, 0, 0], '/src/assets/Submarine.png'),
-    typeDestroyer: new Ship ([0, 0])
+    typeDestroyer: new Ship ([0, 0], '/src/assets/Destroyer.png')
 }
 
 const enemyShipState = {
-    typeCarrier: new Ship ([0, 0, 0, 0, 0]),
-    typeBattleship: new Ship ([0, 0, 0, 0]),
-    typeCruiser: new Ship ([0, 0, 0]),
-    typeSubmarine: new Ship ([0, 0, 0]),
-    typeDestroyer: new Ship ([0, 0])
+    typeCarrier: new Ship ([0, 0, 0, 0, 0], '/src/assets/Carrier.gif'),
+    typeBattleship: new Ship ([0, 0, 0, 0], '/src/assets/Battleship.gif'),
+    typeCruiser: new Ship ([0, 0, 0], '/src/assets/Cruiser.png'),
+    typeSubmarine: new Ship ([0, 0, 0], '/src/assets/Submarine.png'),
+    typeDestroyer: new Ship ([0, 0], '/src/assets/Destroyer.png')
 }
 
 
@@ -236,8 +243,11 @@ function handleSetupBoardClick(event) {
         if (event.target.classList.contains('active')) {
  
             let shipType = findShipType(event.target);
+            //Re render the mouse over effects on the grid since when you click on a square, it doesn't move out of the square so it won't derender the squares that were activated before. Make it manually rerender.
+            handlePlayerBoardMouseOut(event);
             removeShip(playerShipState, shipType);
             primeShip(shipType);
+            handlePlayerBoardMouseOver(event);
             //We only need to render here because if a ship is removed and all the ships are used is the only case when the ready button's state should be set to unclickable again. If a ship was just merely replaced with another ship, it should have never been ready to begin with.
             render();
             return;
@@ -279,13 +289,17 @@ function handleSetupBoardClick(event) {
     //If there are no ships on the neighboring squares, just add the ship.
     } else if (neighboringShips.length === 0 ) {
         addShip(playerShipState, state.shipPrimed, index[0], index[1]);
+        //NOTE: We do not need to rerender mouse over effects because in this case, If a ship is added on an empty square, the squares that are animated are still the same even after placement. And it will be deanimated as long as we mouse out.
         //we only need to render here because, if the game is ready, the last ship should only be placed and not replaced.
         render();
     //If there is only 1 ship on the neighboring squares, replace the ship.
     } else if (neighboringShips.length === 1) {
+        //Re render the mouse over effects.
+        handlePlayerBoardMouseOut(event);
         removeShip(playerShipState, neighboringShips[0]);
         addShip(playerShipState, state.shipPrimed, index[0], index[1]);
         primeShip(neighboringShips[0]);
+        handlePlayerBoardMouseOver(event);
         render();
     } 
 
@@ -311,6 +325,7 @@ function loopEachShipSquare(shipState, shipType, callback, row = shipState[shipT
 
 //This function accepts the playerShipState object (stored in shipState), ship type, and the row, col of the index of the element where the ship is to be added. 
 function addShip(shipState, shipType, row, col) {
+    //Update the ship's state when it is added to a board.
     shipState[shipType].counter = 0;
     shipState[shipType].coordinate = [row, col];
 
@@ -320,25 +335,34 @@ function addShip(shipState, shipType, row, col) {
         shipState[shipType].orientation = state.orientation;
         state.shipPrimed = null;
         state.orientation = null;
+        portEl.querySelector(`.${shipType}`).classList.add('active');
 
         //
         //During the set up stage, we want the image of the ship to show up when we place it on the square.
         //This will, based on the coordinate of the ship's coordinate, place an image of the ship spanning the length in the grid that the ship would take up.
-        if (shipState[shipType].orientation === 'horizontal') {
-            shipState[shipType].attachedImage.style.gridColumn = `${col + 2} / ${col + 2 + shipState[shipType].health.length}`;
-            shipState[shipType].attachedImage.style.gridRow = `${row + 2} / ${row + 3}`;
-            shipState[shipType].attachedImage.style.transform = '';
-        } else if (shipState[shipType].orientation === 'vertical') {
-            shipState[shipType].attachedImage.style.gridRow = `${row + 2} / ${row + 2 + shipState[shipType].health.length}`;
-            shipState[shipType].attachedImage.style.gridColumn = `${col + 2} / ${col + 3}`
-            shipState[shipType].attachedImage.style.transform = 'rotate(90deg)';
-        }
-        playerBoardContainerEl.appendChild(shipState[shipType].attachedImage);
+        addShipImage(shipState, shipType);
 
     }
     loopEachShipSquare(shipState, shipType, function(element) {
         element.classList.add(shipType, 'active');
     })
+}
+
+//This function will just add the ship image to the board as well.
+function addShipImage(shipState, shipType) {
+    let boardContainerEl = (shipState === playerShipState) ? playerBoardContainerEl : opponentBoardContainerEl;
+    let row = shipState[shipType].coordinate[0];
+    let col = shipState[shipType].coordinate[1];
+    if (shipState[shipType].orientation === 'horizontal') {
+        shipState[shipType].attachedImage.style.gridColumn = `${col + 2} / ${col + 2 + shipState[shipType].health.length}`;
+        shipState[shipType].attachedImage.style.gridRow = `${row + 2} / ${row + 3}`;
+        shipState[shipType].attachedImage.style.transform = '';
+    } else if (shipState[shipType].orientation === 'vertical') {
+        shipState[shipType].attachedImage.style.gridRow = `${row + 2} / ${row + 2 + shipState[shipType].health.length}`;
+        shipState[shipType].attachedImage.style.gridColumn = `${col + 2} / ${col + 3}`
+        shipState[shipType].attachedImage.style.transform = 'rotate(90deg)';
+    }
+    boardContainerEl.appendChild(shipState[shipType].attachedImage);
 }
 
 // element.parentNode.removeChild(element);
@@ -352,6 +376,7 @@ function removeShip(shipState, shipType) {
     shipState[shipType].counter = 1;
     shipState[shipType].coordinate = [null, null];
     shipState[shipType].attachedImage.parentNode.removeChild(shipState[shipType].attachedImage);
+    portEl.querySelector(`.${shipType}`).classList.remove('active');
 }
 
 
@@ -510,6 +535,10 @@ function setUpEnemyBoard() {
 
 
 function handleAttack(row, col) {
+    //If phase is not in playing, do nothing.
+    if (state.phase !== 'playing') {
+        return;
+    }
     let squareEl, shipState;
     //Determine which board and state we are messing with based on whose turn it was.
     if (state.turn === 1) {
@@ -551,9 +580,13 @@ function checkShipSunk(shipState, shipType) {
             element.classList.add('sunk');
         })
         let shipName = shipType.substr(4);
-        let attacker = (state.turn === 1) ? 'You' : 'Skynet has';
-        sinkMessageEl.textContent = `${attacker} sunk a ${shipName}!`;
+        let attacker = (state.turn === 1) ? 'You' : 'Skynet';
+        sinkMessageEl.textContent = `${attacker} sunk ${state.turn === 1 ? "Skynet's" : "your"} ${shipName}!`;
         sinkMessageEl.style.backgroundColor = (state.turn === 1) ? '#12E9ED' : '#ED1612';
+        //If an enemy ship was sunk, reveal it.
+        if (state.turn === 1) {
+            addShipImage(shipState, shipType);
+        }
     }
 }
 
@@ -578,32 +611,32 @@ function triggerAi() {
         return;
     }
     winMessageEl.textContent = 'Skynet is thinking';
-    setTimeout(() => {
+    aiDelay = setTimeout(() => {
         let row = null;
         let col = null;
         let squareAvailable = false;
 
         //This is to test the Ai's win conditions.
-        // row = playerShipState.typeDestroyer.coordinate[0];
-        // col = playerShipState.typeDestroyer.coordinate[1];
-        // if (playerCoordinateEl[row][col].classList.contains('hit') 
-        // || playerCoordinateEl[row][col].classList.contains('missed') ) {
-        //     if (playerShipState.typeDestroyer.orientation === 'horizontal') {
-        //         col += 1;
-        //     } else {
-        //         row += 1;
-        //     }
-        // }
-    
-        //This will decide if a random place on the board to place a ship is available to be placed.
-        while (squareAvailable === false) {
-            row = Math.floor(Math.random() * 10);
-            col = Math.floor(Math.random() * 10);
-            if (!playerCoordinateEl[row][col].classList.contains('hit')
-            && !playerCoordinateEl[row][col].classList.contains('missed')) {
-                squareAvailable = true;
+        row = playerShipState.typeDestroyer.coordinate[0];
+        col = playerShipState.typeDestroyer.coordinate[1];
+        if (playerCoordinateEl[row][col].classList.contains('hit') 
+        || playerCoordinateEl[row][col].classList.contains('missed') ) {
+            if (playerShipState.typeDestroyer.orientation === 'horizontal') {
+                col += 1;
+            } else {
+                row += 1;
             }
         }
+    
+        //This will decide if a random place on the board to place a ship is available to be placed.
+        // while (squareAvailable === false) {
+        //     row = Math.floor(Math.random() * 10);
+        //     col = Math.floor(Math.random() * 10);
+        //     if (!playerCoordinateEl[row][col].classList.contains('hit')
+        //     && !playerCoordinateEl[row][col].classList.contains('missed')) {
+        //         squareAvailable = true;
+        //     }
+        // }
 
         //Can use the above code for a simple random Ai.
 
@@ -616,8 +649,11 @@ function triggerAi() {
 }
 
 function init() {
+    clearTimeout(aiDelay);
     state.phase = 'setup';
     state.shipPrimed = null;
+    state.orientation = null;
+    state.turn = 1;
     for (row=0; row < 10; row++) {
         for(col=0; col < 10; col++) {
             playerCoordinateEl[row][col].className = '';
@@ -629,19 +665,25 @@ function init() {
         playerShipState[ship].health.fill(0);
         playerShipState[ship].coordinate = [null, null];
         playerShipState[ship].counter = 1;
+        if (playerBoardContainerEl.contains(playerShipState[ship].attachedImage)) {
+            playerShipState[ship].attachedImage.parentNode.removeChild(playerShipState[ship].attachedImage);
+        }
     }
     for (let ship in enemyShipState) {
         enemyShipState[ship].orientation = 'horizontal';
         enemyShipState[ship].health.fill(0);
         enemyShipState[ship].coordinate = [null, null];
         enemyShipState[ship].counter = 1;
+        if (opponentBoardContainerEl.contains(enemyShipState[ship].attachedImage)) {
+            enemyShipState[ship].attachedImage.parentNode.removeChild(enemyShipState[ship].attachedImage);
+        }
     }
-    winMessageEl.textContent = 'Set up your Ships!';
-    winMessageEl.style.backgroundColor = 'transparent';
-    sinkMessageEl.textContent = `Left Click to Select and Place the Ships, Right Click to Rotate the Ship`;
-    sinkMessageEl.style.backgroundColor = 'transparent';
-    shipHoverEl.style.display = 'none';
-    shipHoverEl.src = '';
+    readyEl.textContent = 'Ready?';
+    //Reset the styling for the ships at port.
+    portEl.querySelectorAll('img').forEach((element) => {
+        element.classList.remove('active');
+    })
+    render();
 }
 
 function render () {
@@ -650,16 +692,21 @@ function render () {
     //Render ready button.
     if (state.phase !== 'setup') {
         readyEl.className = '';
+        readyEl.textContent = 'PLAYING!';
     } else if (state.phase === 'setup') {
         let unplacedShips = 0;
         for (let ship in playerShipState) {
             unplacedShips += playerShipState[ship].counter;
         }
         if (unplacedShips === 0) {
-            readyEl.className = 'active';
+            readyEl.className = 'clickable';
         } else {
             readyEl.className = '';
         }
+        winMessageEl.textContent = 'Set up your Ships!';
+        winMessageEl.style.backgroundColor = 'transparent';
+        sinkMessageEl.innerHTML = `Left Click to Select and Place the Ships<br>Right Click to Rotate the Ship`;
+        sinkMessageEl.style.backgroundColor = 'transparent';
         //Render the Primed ship.
         renderShipPrimed();
 
@@ -686,10 +733,16 @@ function render () {
         }//Render if Winner
         if (playerDeadCount === 5) {
             state.phase === 'Over';
-            console.log('You Won!');
+            winMessageEl.textContent = 'You Destroyed Skynet!';
+            winMessageEl.style.backgroundColor = '#18E75B';
+            sinkMessageEl.textContent = '';
+            sinkMessageEl.style.backgroundColor = 'transparent'
         } else if (computerDeadCount === 5) {
             state.phase === 'Over';
-            console.log('Skynet Won!');
+            winMessageEl.textContent = 'Skynet Annihilated You!';
+            winMessageEl.style.backgroundColor = '#A51414'
+            sinkMessageEl.textContent = '';
+            sinkMessageEl.style.backgroundColor = 'transparent'
         }
          //Render whose turn it is
          if (state.turn === 1) {
@@ -716,7 +769,6 @@ function renderShipPrimed() {
         shipHoverEl.style.display = 'inline-block';
         shipHoverEl.src = playerShipState[state.shipPrimed].attachedImage.src;
         shipHoverEl.style.width = `calc(${playerShipState[state.shipPrimed].health.length} * var(--square-size)`;
-        root.style.setProperty('--setup-hover-color', 'blue');
         //Based on the orientation, determine the orientation of the image via rotate and adjust the transform origin so that it's not the top left corner that the cursor is on.
         if (state.orientation === 'vertical') {
             shipHoverEl.style.transform = 'rotate(90deg)';
@@ -724,11 +776,11 @@ function renderShipPrimed() {
         } else {
             shipHoverEl.style.transform = '';
         } 
+        //ReRender the hover effects.
     //if the ship isn't primed, make it disappear.
     } else if (!state.shipPrimed) {
         shipHoverEl.style.display = 'none';
         shipHoverEl.src = '';
-        root.style.setProperty('--setup-hover-color', 'transparent');
     }
 }
 
@@ -744,10 +796,10 @@ function handlePlayerBoardMouseOver(event) {
     if (state.shipPrimed) {
 
 
-        //If the ship primed goes over the edge, make the ship hover image have a background color of red to indicate a problem.
+        //If the ship primed goes over the edge, make the ship hover image have a background color of colors.error to indicate a problem.
         if (((state.orientation === 'horizontal') && (index[1] + playerShipState[state.shipPrimed].health.length - 1) > 9) ||
         ((state.orientation === 'vertical') && (index[0] + playerShipState[state.shipPrimed].health.length - 1) > 9)) {
-            shipHoverEl.style.backgroundColor = 'red';
+            shipHoverEl.style.backgroundColor =  colors.error;
             return;
         } else {
             //if the squares do not go over the edge:
@@ -763,14 +815,15 @@ function handlePlayerBoardMouseOver(event) {
                     }
                 };
             }, index[0], index[1]);
-            //If the primed ship overlaps more than 1 ship, also make the ship image hover red.
+            //If the primed ship overlaps more than 1 ship, also make the ship image hover colors.error.
             if (neighboringShips.length > 1) {
-                shipHoverEl.style.backgroundColor = 'red';
+                shipHoverEl.style.backgroundColor =  colors.error;
                 return;
             } else {
                 //Else, the ship is good to go. Animate the squares it would take.
                 loopEachShipSquare(playerShipState, state.shipPrimed, function(element) {
                     element.style.transform = 'scale(1.1)';
+                    element.style.backgroundColor = colors.shipPrimeHover;
                 }, index[0], index[1]);
                 return;
             }
@@ -782,6 +835,7 @@ function handlePlayerBoardMouseOver(event) {
         if (shipType) {
             loopEachShipSquare(playerShipState, shipType, function(element) {
                 element.style.transform = 'scale(1.1)';
+                element.style.backgroundColor = colors.shipPrimeHover;
             });
             return;
         //Otherwise, just animate the single square.
@@ -812,6 +866,7 @@ function handlePlayerBoardMouseOut(event) {
             //Else, remove the styling from the neighboring squares.
             loopEachShipSquare(playerShipState, state.shipPrimed, function(element) {
                 element.style.transform = 'scale(1.0)';
+                element.style.backgroundColor = '';
             }, index[0], index[1]);
             return;
             
@@ -823,6 +878,7 @@ function handlePlayerBoardMouseOut(event) {
         if (shipType) {
             loopEachShipSquare(playerShipState, shipType, function(element) {
                 element.style.transform = 'scale(1.0)';
+                element.style.backgroundColor = '';
             });
             return;
         //Otherwise, just animate the single square.

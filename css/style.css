@@ -8,14 +8,19 @@
     --square-size: 4vw;
     --grid-size: repeat(10, 4vw);
     --axis-grid-size: repeat(11, 4vw);
-    --setup-hover-color: transparent;
-    --ship-length: 0;
+    --player-square-active-color: #18E75B;
 }
 
 
 
 
-
+body {
+    background: black;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    background: rgb(2,0,36);
+    background: linear-gradient(180deg, rgba(2,0,36,1) 5%, rgba(1,70,108,1) 23%, rgba(1,56,150,1) 71%, rgba(0,212,255,1) 100%);
+}
 
 
 #flex-grid-game-container {
@@ -69,53 +74,47 @@
 }
 
 .grid-container div {
-    background: grey;
+    background: rgba(128, 128, 128, 0.75);
     grid-column: 1 span;
     border: 1px solid black;
     margin: 5%;
+    transition: transform 0.3s ease;
 }
 
 .grid-container div:hover {
     cursor: pointer;
+    transform: scale(1.1);
 }
 
 
 #player-grid-container > .active {
-    background-color: red;
+    background-color: var(--player-square-active-color);
 }
 
-#player-grid-container > div {
-    transition: transform 0.3s ease;
-    transform: scale(1.0);
-}
 
 #player-grid-container > div.missed {
-    border: 3px solid greenyellow;
+    border: 5px solid white;
 }
 
 #player-grid-container > div.hit {
-    border: 3px solid blue;
+    border: 5px solid #FF0000;
 }
 
-/* 
-#player-grid-container > div:hover {
-    background: var(--setup-hover-color);
-} */
-
-#opponent-grid-container > .active {
-    background-color: orange;
+#player-grid-container > .active.sunk {
+    background-color: #FF0000;
 }
+
 
 #opponent-grid-container > .active.sunk {
-    background-color: red;
+    background-color: #FF0000;
 }
 
 #opponent-grid-container > div.missed {
-    border: 3px solid greenyellow;
+    border: 5px solid white;
 }
 
 #opponent-grid-container > div.hit {
-    border: 3px solid blue;
+    border: 5px solid #FF0000;
 }
 
 
@@ -126,18 +125,46 @@
 
 
 #battleships-container {
-    background: burlywood;
+    position: relative;
     width: 100%;
-    height: 500px;
+    height: 400px;
+    overflow: hidden;
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
 }
 
-#battleships-container > div {
-    
+#battleships-container:before {
+    content: "";
+    position: absolute;
+    top: 40%;
+    width: 100%;
+    height: 100%;
+    z-index: -10;
+    pointer-events: none;
+    background-image: url(../src/assets/WoodenBoards1.svg);
+    background-size: 10%;
+    /* transform: rotate(90deg); */
 }
+
 
 #battleships-container img {
     height: var(--square-size);
     object-fit: contain;
+    user-select: none;
+    opacity: 1;
+    cursor: pointer;
+    margin: 50px;
+    transition: transform 0.3s ease;
+}
+
+#battleships-container img:hover {
+    transform: scale(1.1);
+}
+
+#battleships-container img.active {
+    opacity: 0.5;
 }
 
 #battleships-container img.typeCarrier {
@@ -165,23 +192,49 @@
 }
 
 #button-container {
+    margin-top: 40px;
     display: flex;
     justify-content: space-around;
     align-items: center;
 }
 
-#button-container > #reset {
-    /* margin-left: 400px; */
+#reset {
+    text-align: center;
+    font-size: 20px;
+    padding: 15px;
+    background-color: #DC143C;
+    border-radius: 10%;
+    border-color: none;
+    border-width: 0;
+    outline: none;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+#reset:hover {
+    transform: scale(1.1);
 }
 
 #ready {
+    text-align: center;
+    font-size: 20px;
+    padding: 15px;
+    background-color: var(--player-square-active-color);
+    border-radius: 10%;
+    border-color: none;
+    border-width: 0;
+    outline: none;
     cursor: not-allowed;
     opacity: 0.5;
+    transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-#ready.active {
+#ready.clickable {
     cursor: pointer;
     opacity: 1;
+}
+
+#ready.clickable:hover {
+    transform: scale(1.1);
 }
 
 
@@ -196,3 +249,122 @@
     height: var(--square-size);
     border-radius: 10%;
 }
+
+header {
+    text-align: center;
+    vertical-align: middle;
+    margin: auto;
+    width: 25vw;
+    font-family: 'Bowlby One SC', cursive;
+    font-size: 40px;
+    color: white;
+}
+
+h1 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    max-width: 80vw;
+    margin: auto;
+    margin-top: 50px;
+    height: 80px;
+    font-family: 'Bowlby One SC', cursive;
+    font-size: 40px;
+    color: white;
+}
+
+h2 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    max-width: 80vw;
+    margin: auto;
+    min-height: 125px;
+    font-family: 'Bowlby One SC', cursive;
+    font-size: 40px;
+    color: white;
+    border-radius: 9000000px;
+}
+
+
+
+
+
+
+
+aside {
+    position: fixed;
+    z-index: -15;
+    background-color: transparent;
+    height: 110vh;
+    width: 110vh;
+    left: calc(50% - 55vh);
+    top: calc(50% - 55vh);
+}
+
+.pointer {
+    position: absolute;
+    z-index: 1024;
+    left: 10.5820106%;
+    right: 10.5820106%;
+    top: 10.5820106%;
+    bottom: 50%;
+    will-change: transform;
+    transform-origin: 50% 100%;
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    background-image: linear-gradient(135deg, 
+      rgba(5, 162, 185, 0.8) 0%, 
+      rgba(0, 0, 0, 0.02) 70%,
+      rgba(0, 0, 0, 0) 100%
+      );
+    clip-path: polygon(100% 0, 
+      100% 10%,
+      50% 100%, 0 100%, 0 0);
+    
+    animation: rotate360 3s infinite linear;
+}
+
+.pointer:after {
+    content: "";
+    position: absolute;
+    width: 50%;
+    bottom: -1px;
+    border-top: 2px solid rgba(0, 231, 244, 0.8);
+    box-shadow: 0 0 3px rgba(0, 231, 244, 0.6);
+    border-radius: 9px;
+}
+
+.shadow {
+    position: absolute;
+    left: 11%;
+    top: 11%;
+    right: 11%;
+    bottom: 11%;
+    margin: auto;
+    border-radius: 9999px;
+    box-shadow: 0 0 66px 6px #A51414;
+    animation: shadow 1s infinite ease;
+  }
+
+  @keyframes rotate360 {
+    0% {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+  
+  @keyframes shadow {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
