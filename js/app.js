@@ -19,7 +19,14 @@ const state = {
     turn: 1
 }
 
-const pastAiChoice = [];
+const aiState = {
+    hits: [],
+    direction: '',
+    mode: 'guessing',
+    difficulty: 'easy',
+    thinkTime: 5000
+};
+
 let aiDelay;
 //the ship coordinate represents the coordinate the front of the ship is at on the game board.
 class Ship {
@@ -303,42 +310,108 @@ function triggerAi() {
     if (state.phase !== 'playing') {
         return;
     }
+
     winMessageEl.textContent = 'Skynet is thinking';
-    aiDelay = setTimeout(() => {
-        let row = null;
-        let col = null;
-        let squareAvailable = false;
+    let row = null;
+    let col = null;
+    let squareAvailable = false;
 
-        //This is to test the Ai's win conditions.
-        // row = playerShipState.typeDestroyer.coordinate[0];
-        // col = playerShipState.typeDestroyer.coordinate[1];
-        // if (playerCoordinateEl[row][col].classList.contains('hit') 
-        // || playerCoordinateEl[row][col].classList.contains('missed') ) {
-        //     if (playerShipState.typeDestroyer.orientation === 'horizontal') {
-        //         col += 1;
-        //     } else {
-        //         row += 1;
-        //     }
-        // }
-    
-        //This will decide if a random place on the board to place a ship is available to be placed.
-        while (squareAvailable === false) {
-            row = Math.floor(Math.random() * 10);
-            col = Math.floor(Math.random() * 10);
-            if (!playerCoordinateEl[row][col].classList.contains('hit')
-            && !playerCoordinateEl[row][col].classList.contains('missed')) {
-                squareAvailable = true;
-            }
-        }
+    //This is the aiCode for the easy difficulty.
+    if (aiState.difficulty === 'easy') { 
+        aiDelay = setTimeout(() => {
 
-        //Can use the above code for a simple random Ai.
-
-        //Hard Ai is below.
+            //This is to test the Ai's win conditions.
+            // row = playerShipState.typeDestroyer.coordinate[0];
+            // col = playerShipState.typeDestroyer.coordinate[1];
+            // if (playerCoordinateEl[row][col].classList.contains('hit') 
+            // || playerCoordinateEl[row][col].classList.contains('missed') ) {
+            //     if (playerShipState.typeDestroyer.orientation === 'horizontal') {
+            //         col += 1;
+            //     } else {
+            //         row += 1;
+            //     }
+            // }
         
+            //This will decide if a random place on the board to place a ship is available to be placed.
+            while (squareAvailable === false) {
+                row = Math.floor(Math.random() * 10);
+                col = Math.floor(Math.random() * 10);
+                if (!playerCoordinateEl[row][col].classList.contains('hit')
+                && !playerCoordinateEl[row][col].classList.contains('missed')) {
+                    squareAvailable = true;
+                }
+            }
+            //Can use the above code for a simple random Ai.
+            handleAttack(row, col);
+
+        }, aiState.thinkTime);
+    }
+
+    //This is the aiCode for the hard difficulty.
+    if (aiState.difficulty === 'hard') { 
+        aiDelay = setTimeout(() => {
+        
+            //If the ai has had no prior hits before, just make a random guess.
+            if (aiState.hits.length === 0) {
+                while (squareAvailable === false) {
+                    row = Math.floor(Math.random() * 10);
+                    col = Math.floor(Math.random() * 10);
+                    if (!playerCoordinateEl[row][col].classList.contains('hit')
+                    && !playerCoordinateEl[row][col].classList.contains('missed')) {
+                        squareAvailable = true;
+                    }
+                }
+                if (playerCoorindateEl[row][col].classList.contains('active')) {
+                    aiState.hits.push([row, col]);
+                    aiState.mode = 'searching';
+                }
+            //If the ai has had a prior hit before, pick one of the four directions: up, down, left, right as long as they haven't been hit before. If it lands another hit, set the ai state to destroying.
+            } else if (aiState.hits.length === 1) {
+                while (squareAvailable === false) {
+                    //Initialize the row and col values based on the previous hit value.
+                    row = aiState.hits[0][0];
+                    col = aiState.hits[0][1];
+                    let roll = Math.floor(Math.random() * 4);
+                    switch ( roll ) {
+                        case 0:
+                            //Go up
+                            row = aiState.hits[0][0] + 1;
+                            break;
+                        case 1: 
+                            //Go down
+                            row = aiState.hits[0][0] - 1;
+                            break;
+                        case 2:
+                            //Go right
+                            col = aiState.hits[0][1] + 1;
+                            break;
+                        case 3:
+                            //Go left
+                            col = aiState.hits[0][1] - 1;
+
+                    }
+                    //If there is an edge in the selected direction, do nothing and repeat the while loop.
+                    if (row < 0 || row > 9 || col < 0 || col > 9) {
+                    } else if (!playerCoordinateEl[row + randomRow][col + randomCol].classList.contains('hit')
+                    && !playerCoordinateEl[row][col].classList.contains('missed')) {
+                        squareAvailable = true;
+                    }
+
+                }
+                if (playerCoorindateEl[row][col].classList.contains('active')) {
+                    aiState.hits.push([row, col]);
+                    aiState.mode = 'destroying';
+                }
+            } else if (aiState.hits.length > 1) {
+                
+            }
 
 
-        handleAttack(row, col);
-    }, 5000);
+
+            handleAttack(row, col);
+
+        }, aiState.thinkTime);
+    }
 }
 
 
@@ -650,10 +723,9 @@ function handleAttack(row, col) {
             : (row - shipState[shipType].coordinate[0]);
 
         shipState[shipType].health[healthIndex] = 1;
-        // if (state.turn === -1) {
-        //     pastAiChoice.push
-        // }
+ 
         checkShipSunk(shipState, shipType);
+
     } else {
         squareEl.classList.add('missed');
     }
@@ -832,4 +904,3 @@ function renderShipPrimed() {
 
 createGameBoards();
 init();
-
